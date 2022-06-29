@@ -1,0 +1,83 @@
+version: "3"
+    
+services:
+  #DISCOVERY SERVICE
+  discovery:
+    build:
+      context: ./discovery-service
+      dockerfile: Dockerfile
+    image: df/discovery:0.01
+    ports:
+      - 8761:8761
+
+      
+  #API GATEWAY
+  gateway:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    image: df/gateway:0.01
+    ports:
+      - 8087:8087
+    depends_on:
+      - discovery
+  
+  #AUTH SERVICE
+  auth:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    image: df/auth:0.01
+    depends_on:
+      - discovery
+
+  #ADMIN SERVICE
+  admin:
+    build:
+      context: ./admin-service
+      dockerfile: Dockerfile
+    image: df/admin:0.01
+    ports:
+      - 8383:8383
+    depends_on:
+      - discovery
+      
+  #BROKER SERVICE
+  broker:
+    build:
+      context: ./broker-service
+      dockerfile: Dockerfile
+    image: df/broker:0.01
+    depends_on:
+      - discovery
+      
+  #COMMON SERVICE
+  common:
+    build:
+      context: ./common-service
+      dockerfile: Dockerfile
+    image: df/common:0.01
+    depends_on:
+      - discovery
+      
+  #FD SERVICE
+  fd:
+    build:
+      context: ./fd-service
+      dockerfile: Dockerfile
+    image: df/fd:0.01
+    depends_on:
+      - discovery
+      
+  #Savings Pocket (SP) SERVICE
+  sp:
+    build:
+      context: ./sp-service
+      dockerfile: Dockerfile
+    image: df/sp:0.01
+    depends_on:
+      - discovery
+      
+   
+      
+      
