@@ -21,7 +21,7 @@ public class FdController {
     FdService fdService;
 
     @RequestMapping(value = "/details", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getAppAccessToken(@RequestBody FdDetailsRequestBean requestBean){
+    public ResponseEntity<?> getFdDetails(@RequestBody FdDetailsRequestBean requestBean){
 
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -36,5 +36,5 @@ public class FdController {
         }
 
         return responseEntity;
-    };
+    }
 }

@@ -3,6 +3,7 @@ package com.epic.gatewayservice.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -21,11 +22,14 @@ public class GatewayService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", authString);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+            ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+
+            ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
             return response;
         } catch(HttpStatusCodeException e) {
             ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
@@ -52,7 +56,8 @@ public class GatewayService {
         }else if(validateToken(authString) == 0){
             HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
             try {
-                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+                ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+                ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
                 return response;
             } catch(HttpStatusCodeException e) {
                 ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
