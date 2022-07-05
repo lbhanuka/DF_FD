@@ -84,15 +84,15 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/obtain/jwt", method = RequestMethod.POST)
-    public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString){
+    public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString,@RequestBody JwtRequestBean requestBean){
         System.out.println("------------------------------------------------>> Token Controller.getJsonWebToken");
         String token;
         ResponseBean responseBean = new ResponseBean();
 
         try {
 
-            if (commonService.isAuthorisedAccess(authString)){
-                token = commonService.getJWT(authString);
+            if (commonService.isAuthorisedAccess(authString, requestBean.getDeviceId())){
+                token = commonService.getJWT(authString, requestBean.getDeviceId());
                 Token tokenBean = new Token();
                 tokenBean.setToken(token);
                 responseBean.setResponse(MessageVarList.RSP_SUCCESS);

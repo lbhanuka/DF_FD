@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MobileUserRepo extends JpaRepository<ShMobileUserEntity,String> {
 
+    boolean existsByDeviceid(String deviceId);
+
 }

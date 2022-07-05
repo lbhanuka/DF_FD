@@ -31,6 +31,12 @@ public class GatewayController {
         return gatewayService.getResponse(url,request,null);
     }
 
+    @PostMapping(value = "/auth/obtain/jwt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getJwt(@RequestBody Object request) {
+        String url = "http://AUTH-SERVICE/auth/obtain/jwt";
+        return gatewayService.getResponse(url,request,null);
+    }
+
     @PostMapping(value = "/auth/availability/{service}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> checkUserAvailibility(@RequestHeader(value = "authorization") String authString,@RequestBody Object request, @PathVariable("service") String serviceType) {
         String url = "http://AUTH-SERVICE/auth/availability/" + serviceType;
