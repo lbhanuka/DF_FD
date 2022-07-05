@@ -1,6 +1,8 @@
 package com.epic.authservice.services;
 
+import com.epic.authservice.persistance.repository.MobileUserRepo;
 import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,10 @@ public class CommonService {
     @Value("${config.tokenExpTimeInMinutes}")
     public int tokenExpTimeInMinutes;
 
-    public boolean isAuthorisedAccess(String httpBacicAuthHeader){
+    @Autowired
+    MobileUserRepo mobileUserRepo;
+
+    public boolean isAuthorisedAccess(String httpBacicAuthHeader, String deviceId){
         boolean isAuthorised = false;
 
         String[] credentials = this.getCredentials(httpBacicAuthHeader);
@@ -43,7 +48,7 @@ public class CommonService {
         String password = credentials[1];
 
         //Check if username with this password and ip has access to the service code
-        if (this.isAuthorised(username, password)){
+        if (this.isAuthorised(username, password, deviceId)){
             isAuthorised = true;
         }
         return isAuthorised;
@@ -60,16 +65,17 @@ public class CommonService {
         return credentials;
     }
 
-    public boolean isAuthorised(String username, String password){
+    public boolean isAuthorised(String username, String password, String deviceId){
         boolean authorised = false;
-        if(username != null && password != null && username.equals(this.username) && password.equals(this.password)){
+        boolean isRealDeviceId = mobileUserRepo.existsByDeviceid(deviceId);
+        if(isRealDeviceId && username != null && password != null && username.equals(this.username) && password.equals(this.password)){
             authorised = true;
         }
 
         return authorised;
     }
 
-    public String getJWT(String authString) throws Exception{
+    public String getJWT(String authString, String deviceId) throws Exception{
         String token;
 
         String[] credentials = this.getCredentials(authString);
@@ -83,6 +89,7 @@ public class CommonService {
                 .setSubject("EPIC_DF_SERVICE_HANDLER_TOKEN")
                 .setExpiration(afterAddingTousandMins)
                 .claim("username", username)
+                .claim("device_id", deviceId)
                 .signWith(
                         SignatureAlgorithm.HS256,
                         synthima.getBytes("UTF-8")
