@@ -42,12 +42,12 @@ public class CommonService {
             return map;
         }
 
-        if(!requestBean.getParamKey().equals("")){
-
-        }else if(requestBean.getCategory().equals("FD") && requestBean.getParamKey().equals("")){
+        if(requestBean.getCategory().equals("FD")){
             resultList = commonService.getUnderCategory(requestBean.getCategory());
-        }else if (requestBean.getCategory().equals("SP") && requestBean.getParamKey().equals("")){
+        }else if (requestBean.getCategory().equals("SP")){
             resultList = commonService.getUnderCategory(requestBean.getCategory());
+        }else if (requestBean.getCategory().equals("ALL")){
+            resultList = commonService.getAll();
         }
 
         if(resultList != null && !resultList.isEmpty()){

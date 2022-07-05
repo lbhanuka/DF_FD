@@ -42,4 +42,10 @@ public class GatewayController {
         String url = "http://AUTH-SERVICE/auth/availability/" + serviceType;
         return gatewayService.getResponseSecure(url,request,authString);
     }
+
+    @PostMapping(value = "/common/getparam", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getParamDetails(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
+        String url = "http://COMMON-SERVICE/common/getparam";
+        return gatewayService.getResponseSecure(url,request,authString);
+    }
 }
