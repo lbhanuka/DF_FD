@@ -2,8 +2,10 @@ package com.epic.fdservice.services;
 
 import com.epic.fdservice.models.CrmFdDetailsBean;
 import com.epic.fdservice.models.FdDetailsRequestBean;
+import com.epic.fdservice.models.FdInstructionsResponseBean;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
 import com.epic.fdservice.persistance.repository.FdDetailsRepo;
+import com.epic.fdservice.persistance.repository.FdInstructionsRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,9 @@ public class FdService {
 
     @Autowired
     FdDetailsRepo fdDetailsRepo;
+
+    @Autowired
+    FdInstructionsRepo fdInstructionsRepo;
 
     @Autowired
     Validator validator;
@@ -57,6 +62,35 @@ public class FdService {
             map.put("DATA",resultList);
         } else {
             map.put("MESSAGE","NO FD DETAILS FOUND");
+            map.put("STATUS","FAIL");
+        }
+
+        return map;
+    }
+
+    public Map<String, Object> getAllActiveInstructions(String language) {
+        Map<String, Object> map = new HashMap<>();
+        List<FdInstructionsResponseBean> resultList = null;
+
+        if(language != null && language.equals("E")){
+            resultList = fdInstructionsRepo.getAllInstructionsEnglish("ACT");//get all active instructions
+        }else if (language != null && language.equals("S")){
+            resultList = fdInstructionsRepo.getAllInstructionsSinhala("ACT");//get all active instructions
+        }else if (language != null && language.equals("T")) {
+            resultList = fdInstructionsRepo.getAllInstructionsTamil("ACT");//get all active instructions
+        }else {
+            map.put("MESSAGE", "INVALID LANGUAGE");
+            map.put("STATUS","BAD REQUEST");
+            return map;
+        }
+
+        if(resultList != null && !resultList.isEmpty()){
+
+            map.put("MESSAGE","FD OPENING INSTRUCTION DETAILS FETCHED");
+            map.put("STATUS","SUCCESS");
+            map.put("DATA",resultList);
+        } else {
+            map.put("MESSAGE","NO ACTIVE FD OPENING INSTRUCTIONS FOUND");
             map.put("STATUS","FAIL");
         }
 

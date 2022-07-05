@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -26,6 +23,24 @@ public class FdController {
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = fdService.getFdDetails(requestBean);
+
+        if(map.get("STATUS").equals("UNAUTHORISED")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+        }else if (map.get("STATUS").equals("BAD REQUEST")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAIL")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.OK);
+        }
+
+        return responseEntity;
+    }
+
+    @RequestMapping(value = "/instructions/{language}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAllActiveInstructions(@PathVariable("language") String language){
+
+        ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        Map<String, Object> map = fdService.getAllActiveInstructions(language);
 
         if(map.get("STATUS").equals("UNAUTHORISED")){
             responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);

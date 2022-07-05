@@ -25,6 +25,12 @@ public class GatewayController {
         return gatewayService.getResponseSecure(url,request,authString);
     }
 
+    @GetMapping(value = "/fd/instructions/{language}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAllActiveInstructions(@RequestHeader(value = "authorization") String authString, @PathVariable("language") String language) {
+        String url = "http://FD-SERVICE/fd/instructions/" + language;
+        return gatewayService.getResponseSecure(url,null,authString);
+    }
+
     @PostMapping(value = "/auth/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAppAccessToken(@RequestBody Object request) {
         String url = "http://AUTH-SERVICE/auth/token";
