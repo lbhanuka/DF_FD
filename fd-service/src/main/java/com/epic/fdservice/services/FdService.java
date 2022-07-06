@@ -3,9 +3,11 @@ package com.epic.fdservice.services;
 import com.epic.fdservice.models.CrmFdDetailsBean;
 import com.epic.fdservice.models.FdDetailsRequestBean;
 import com.epic.fdservice.models.FdInstructionsResponseBean;
+import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
 import com.epic.fdservice.persistance.repository.FdDetailsRepo;
 import com.epic.fdservice.persistance.repository.FdInstructionsRepo;
+import com.epic.fdservice.persistance.repository.FdRatesRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,9 @@ public class FdService {
 
     @Autowired
     FdInstructionsRepo fdInstructionsRepo;
+
+    @Autowired
+    FdRatesRepo fdRatesRepo;
 
     @Autowired
     Validator validator;
@@ -95,5 +100,34 @@ public class FdService {
         }
 
         return map;
+    }
+
+    public Map<String, Object> getFdRates(String type) {
+
+        Map<String, Object> map = new HashMap<>();
+        List<FdRatesResponseBean> resultList = null;
+
+        if(type != null && type.equals("DIGITAL")){
+            resultList = fdRatesRepo.getFdRatesByType("DIGITAL");
+        }else if (type != null && type.equals("SENIOR_CITIZEN")){
+            resultList = fdRatesRepo.getFdRatesByType("SENIOR_CITIZEN");
+        }else {
+            map.put("MESSAGE", "INVALID TYPE");
+            map.put("STATUS","BAD REQUEST");
+            return map;
+        }
+
+        if(resultList != null && !resultList.isEmpty()){
+
+            map.put("MESSAGE","FD RATES DETAILS FETCHED");
+            map.put("STATUS","SUCCESS");
+            map.put("DATA",resultList);
+        } else {
+            map.put("MESSAGE","NO ACTIVE FD RATES FOUND");
+            map.put("STATUS","FAIL");
+        }
+
+        return map;
+
     }
 }
