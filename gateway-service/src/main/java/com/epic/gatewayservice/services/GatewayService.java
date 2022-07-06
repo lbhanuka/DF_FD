@@ -37,23 +37,25 @@ public class GatewayService {
         }
     }
 
-    public ResponseEntity<?> getResponseSecure(String url, Object requestParam, String authString) {
+    public ResponseEntity<?> getResponseSecure(String url, Object requestParam, String authString, String authUrl) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", authString);
         Map<String, Object> map = new HashMap<>();
 
-        if(validateToken(authString) == 1){
+        int authStatus = validateToken(authString, authUrl);
+
+        if(authStatus == 1){
             map.put("MESSAGE","INVALID TOKEN");
             map.put("STATUS","UNAUTHORISED");
             ResponseEntity<?> response = new ResponseEntity<>(map,HttpStatus.UNAUTHORIZED);
             return response;
-        }else if(validateToken(authString) == 2){
+        }else if(authStatus == 2){
             map.put("MESSAGE","EXPIRED TOKEN");
             map.put("STATUS","UNAUTHORISED");
             ResponseEntity<?> response = new ResponseEntity<>(map,HttpStatus.UNAUTHORIZED);
             return response;
-        }else if(validateToken(authString) == 0){
+        }else if(authStatus == 0){
             HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
             try {
                 ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
@@ -72,7 +74,7 @@ public class GatewayService {
 
     }
 
-    public int validateToken(String authString) {
+    public int validateToken(String authString, String authUrl) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -80,7 +82,7 @@ public class GatewayService {
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(headers);
 
-        String url = "http://AUTH-SERVICE/auth/validate";
+        String url = authUrl;
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);

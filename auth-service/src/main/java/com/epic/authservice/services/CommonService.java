@@ -98,10 +98,10 @@ public class CommonService {
         return token;
     }
 
-    public HashMap<String,String> validateJWT(String jwt){
+    public String validateJWT(String jwt){
         boolean isAuthorised = false;
         HashMap<String,String> client = new HashMap<>();
-        String ip = null;
+        String device_id = null;
         String username = null;
 
         //pars and authenticate jwt
@@ -110,18 +110,15 @@ public class CommonService {
         try {
             claims = Jwts.parser().setSigningKey(synthima.getBytes("UTF-8")).parseClaimsJws(jwt);
 
-            ip = (String) claims.getBody().get("user_ip");
+            device_id = (String) claims.getBody().get("device_id");
             username = (String) claims.getBody().get("username");
 
-            client.put("username",username);
-            client.put("clientip",ip);
-            client.put("isauthorised","1");
+            return "SUCCESS";
 
         } catch (UnsupportedEncodingException | ExpiredJwtException | MalformedJwtException | SignatureException | IllegalArgumentException e) {
             e.printStackTrace();
-            client.put("isauthorised","0");
+            //client.put("isauthorised","0");
+            return "INVALID";
         }
-
-        return client;
     }
 }

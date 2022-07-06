@@ -119,34 +119,14 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/validate/jwt", method = RequestMethod.POST)
-    public ResponseBean validateJsonWebToken(@RequestHeader(value = "authorization") String authString){
+    public ResponseEntity<?> validateJsonWebToken(@RequestHeader(value = "authorization") String authString){
 
-        HashMap<String,String> clientBean;
-        ResponseBean responseBean = new ResponseBean();
+        ResponseEntity<?> responseEntity;
 
-        try {
-            clientBean = commonService.validateJWT(authString);
-            if(clientBean.get("isauthorised") != null && clientBean.get("isauthorised").equals("1")){
-                responseBean.setResponse(MessageVarList.RSP_SUCCESS);
-                responseBean.setContent(clientBean);
-            }else {
-                responseBean.setResponse(MessageVarList.RSP_NOT_AUTHORISED);
-            }
+        String result = commonService.validateJWT(authString);
 
-        }catch (ExpiredJwtException ex){
-            responseBean.setResponse(MessageVarList.RSP_TOKEN_EXPIRED);
-            responseBean.setContent(null);
-            LogFileCreator.writeErrorTologs(ex);
-        }catch (SignatureException | MalformedJwtException | StringIndexOutOfBoundsException ex){
-            responseBean.setResponse(MessageVarList.RSP_TOKEN_INVALID);
-            responseBean.setContent(null);
-            LogFileCreator.writeErrorTologs(ex);
-        }catch (Exception ex){
-            responseBean.setResponse(MessageVarList.RSP_ERROR);
-            responseBean.setContent(null);
-            LogFileCreator.writeErrorTologs(ex);
-        }
+        responseEntity = new ResponseEntity<>(result, HttpStatus.OK);
 
-        return responseBean;
+        return responseEntity;
     }
 }
