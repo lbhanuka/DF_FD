@@ -8,7 +8,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "FD_DETAILS")
 public class FdDetailsEntity {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "REQUESTID")
     private String requestid;
@@ -25,7 +25,7 @@ public class FdDetailsEntity {
     @Column(name = "AMOUNT")
     private BigDecimal amount;
     @Basic
-    @Column(name = "CREATEDTIME")
+    @Column(name = "CREATEDTIME",updatable = false,insertable = false)
     private Timestamp createdtime;
     @Basic
     @Column(name = "TENURE")
