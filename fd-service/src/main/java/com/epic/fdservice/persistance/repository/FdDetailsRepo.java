@@ -15,4 +15,6 @@ public interface FdDetailsRepo extends JpaRepository<FdDetailsEntity,String> {
     @Query("select new com.epic.fdservice.models.CrmFdDetailsBean(e.fdaccountnumber,e.amount,e.createdtime,e.tenure,e.rate,rn.description,e.interestcreditaccount,e.maturitycreditaccount) from FdDetailsEntity e left join FdRenewalTypesEntity rn on e.renewalinstruction = rn.renewaltypecode where e.cif = ?1")
     List<CrmFdDetailsBean>  findByCif(String cif);
 
+    @Query("select max(e.requestid) from FdDetailsEntity e")
+    String getMaxId();
 }
