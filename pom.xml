@@ -16,11 +16,11 @@
         <module>gateway-service</module>
         <module>discovery-service</module>
         <module>auth-service</module>
-        <module>admin-service</module>
+        <!--<module>admin-service</module>-->
         <module>broker-service</module>
         <module>common-service</module>
         <module>fd-service</module>
-        <module>sp-service</module>
+        <!--<module>sp-service</module>-->
     </modules>
 
     <properties>

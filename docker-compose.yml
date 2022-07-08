@@ -18,7 +18,9 @@ services:
       dockerfile: Dockerfile
     image: df/gateway:0.01
     ports:
-      - 8087:8087
+      - 5256:5256
+    environment:
+      DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
   
@@ -28,19 +30,21 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     image: df/auth:0.01
+    environment:
+      DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
 
   #ADMIN SERVICE
-  admin:
-    build:
-      context: ./admin-service
-      dockerfile: Dockerfile
-    image: df/admin:0.01
-    ports:
-      - 8383:8383
-    depends_on:
-      - discovery
+  #admin:
+  #  build:
+  #    context: ./admin-service
+  #    dockerfile: Dockerfile
+  #  image: df/admin:0.01
+  #  ports:
+  #    - 8383:8383
+  #  depends_on:
+  #    - discovery
       
   #BROKER SERVICE
   broker:
@@ -48,6 +52,8 @@ services:
       context: ./broker-service
       dockerfile: Dockerfile
     image: df/broker:0.01
+    environment:
+      DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
       
@@ -57,6 +63,8 @@ services:
       context: ./common-service
       dockerfile: Dockerfile
     image: df/common:0.01
+    environment:
+      DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
       
@@ -66,17 +74,19 @@ services:
       context: ./fd-service
       dockerfile: Dockerfile
     image: df/fd:0.01
+    environment:
+      DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
       
   #Savings Pocket (SP) SERVICE
-  sp:
-    build:
-      context: ./sp-service
-      dockerfile: Dockerfile
-    image: df/sp:0.01
-    depends_on:
-      - discovery
+  #sp:
+  #  build:
+  #    context: ./sp-service
+  #    dockerfile: Dockerfile
+  #  image: df/sp:0.01
+  #  depends_on:
+  #    - discovery
       
    
       
