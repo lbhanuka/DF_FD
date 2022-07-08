@@ -127,6 +127,15 @@ public class FdService {
 
         if(resultList != null && !resultList.isEmpty()){
 
+            Collections.sort(resultList, new Comparator<FdRatesResponseBean>() {
+                        @Override
+                        public int compare(FdRatesResponseBean o1, FdRatesResponseBean o2) {
+                            int compare = Integer.compare(Integer.parseInt(o1.getPeriod()), Integer.parseInt(o2.getPeriod()));
+                            return compare;
+                        }
+                    }
+            );
+
             map.put("MESSAGE","FD RATES DETAILS FETCHED");
             map.put("STATUS","SUCCESS");
             map.put("DATA",resultList);
