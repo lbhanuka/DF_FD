@@ -1,5 +1,6 @@
 package com.epic.fdservice.controllers;
 
+import com.epic.fdservice.models.FdCreateRequestBean;
 import com.epic.fdservice.models.FdDetailsRequestBean;
 import com.epic.fdservice.services.FdService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -69,5 +71,10 @@ public class FdController {
         }
 
         return responseEntity;
+    }
+
+    @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createFdAccount(@RequestBody FdCreateRequestBean request) {
+        return fdService.createFdAccount(request);
     }
 }

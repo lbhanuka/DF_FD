@@ -26,6 +26,27 @@ public class GatewayController {
         return gatewayService.getResponseSecure(url,request,authString, authUrl);
     }
 
+    @PostMapping(value = "/savings/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getSavingsDetails(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
+        String url = "http://BROKER-SERVICE/savings/details";
+        String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
+        return gatewayService.getResponseSecure(url,request,authString, authUrl);
+    }
+
+    @PostMapping(value = "/fd/calculation", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFdInterestCalculation(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
+        String url = "http://BROKER-SERVICE/fd/calculation";
+        String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
+        return gatewayService.getResponseSecure(url,request,authString, authUrl);
+    }
+
+    @PostMapping(value = "/fd/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createFdAccount(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
+        String url = "http://FD-SERVICE/fd/create";
+        String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
+        return gatewayService.getResponseSecure(url,request,authString, authUrl);
+    }
+
     @GetMapping(value = "/fd/instructions/{language}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllActiveInstructions(@RequestHeader(value = "authorization") String authString, @PathVariable("language") String language) {
         String url = "http://FD-SERVICE/fd/instructions/" + language;
