@@ -7,6 +7,7 @@ import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.models.*;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
 import com.epic.fdservice.persistance.repository.FdDetailsRepo;
+import com.epic.fdservice.persistance.repository.FdInstructionImagesRepo;
 import com.epic.fdservice.persistance.repository.FdInstructionsRepo;
 import com.epic.fdservice.persistance.repository.FdRatesRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class FdService {
 
     @Autowired
     FdRatesRepo fdRatesRepo;
+
+    @Autowired
+    FdInstructionImagesRepo fdInstructionImagesRepo;
 
     @Autowired
     Validator validator;
@@ -222,5 +226,36 @@ public class FdService {
             response.put("MESSAGE",e.getResponseBodyAsString());
             return response;
         }
+    }
+
+    public Map<String, Object> getFdInstructionImages(String language) {
+
+        Map<String, Object> map = new HashMap<>();
+        FdInstructionImagesResponseBean responseBean = null;
+
+        if(language != null && language.equals("E")){
+            responseBean = fdInstructionImagesRepo.getInstructionImageEnglish();
+        }else if (language != null && language.equals("S")){
+            responseBean = fdInstructionImagesRepo.getInstructionImageSinhala();
+        }else if (language != null && language.equals("T")){
+            responseBean = fdInstructionImagesRepo.getInstructionImageTamil();
+        }else {
+            map.put("MESSAGE", "INVALID TYPE");
+            map.put("STATUS","BAD REQUEST");
+            return map;
+        }
+
+        if(responseBean != null && responseBean.getImage()!=null){
+
+            map.put("MESSAGE","FD INSTRUCTION IMAGES FETCHED");
+            map.put("STATUS","SUCCESS");
+            map.put("DATA",responseBean);
+        } else {
+            map.put("MESSAGE","NO ACTIVE FD INSTRUCTION IMAGES FOUND");
+            map.put("STATUS","FAIL");
+        }
+
+        return map;
+
     }
 }

@@ -73,6 +73,24 @@ public class FdController {
         return responseEntity;
     }
 
+    @RequestMapping(value = "/instructionImages/{language}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getInstructionImages(@PathVariable("language") String language){
+
+        ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        Map<String, Object> map = fdService.getFdInstructionImages(language);
+
+        if(map.get("STATUS").equals("UNAUTHORISED")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+        }else if (map.get("STATUS").equals("BAD REQUEST")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAIL")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.OK);
+        }
+
+        return responseEntity;
+    }
+
     @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFdAccount(@RequestBody FdCreateRequestBean request) {
         return fdService.createFdAccount(request);

@@ -61,6 +61,13 @@ public class GatewayController {
         return gatewayService.getResponseSecure(url,null,authString,authUrl);
     }
 
+    @GetMapping(value = "/fd/instructionImages/{language}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFdInstructionImages(@RequestHeader(value = "authorization") String authString, @PathVariable("language") String language) {
+        String url = "http://FD-SERVICE/fd/instructionImages/" + language;
+        String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
+        return gatewayService.getResponseSecure(url,null,authString,authUrl);
+    }
+
     @PostMapping(value = "/auth/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAppAccessToken(@RequestBody Object request) {
         String url = "http://AUTH-SERVICE/auth/token";
