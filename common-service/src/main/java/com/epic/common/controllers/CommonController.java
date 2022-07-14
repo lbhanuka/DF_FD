@@ -21,7 +21,7 @@ public class CommonController {
     CommonService commonService;
 
     @RequestMapping(value = "/getparam", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getParamDetails(@RequestBody CommonParamRequestBean requestBean){
+    public ResponseEntity<?> getParamDetails(@RequestBody CommonParamRequestBean requestBean) throws Exception {
 
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 

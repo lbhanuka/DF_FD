@@ -5,20 +5,20 @@ import javax.validation.constraints.Pattern;
 
 public class CommonParamRequestBean {
 
-    //@NotNull(message = "paramKey cannot be null")
-    //String paramKey;
+    //@NotNull(message = "Device Id cannot be null")
+    String deviceId;
 
     @NotNull(message = "category cannot be null")
     @Pattern(regexp = "^FD$|^SP$|^CM$|^ALL$", message = "category : invalid ")
     String category;
 
-    /*public String getParamKey() {
-        return paramKey;
+    public String getDeviceId() {
+        return deviceId;
     }
 
-    public void setParamKey(String paramKey) {
-        this.paramKey = paramKey;
-    }*/
+    public void setDeviceId(String paramKey) {
+        this.deviceId = paramKey;
+    }
 
     public String getCategory() {
         return category;
