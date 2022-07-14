@@ -52,7 +52,7 @@ public class CommonService {
         }
 
 
-        if (requestBean.getDeviceId() != null && !requestBean.getDeviceId().equals("") && requestBean.getCategory().equals("FD")) {
+        if (requestBean.getDeviceId() != null && !requestBean.getDeviceId().equals("") && requestBean.getCategory().equals("ALL")) {
 
             if (resultList != null && !resultList.isEmpty()) {
 
