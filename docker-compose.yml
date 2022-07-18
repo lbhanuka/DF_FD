@@ -23,6 +23,9 @@ services:
       - 8081:5256
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
     networks:
@@ -36,6 +39,9 @@ services:
     image: df/auth:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
     networks:
@@ -60,6 +66,9 @@ services:
     image: df/broker:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
     networks:
@@ -73,6 +82,9 @@ services:
     image: df/common:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
     networks:
@@ -86,6 +98,9 @@ services:
     image: df/fd:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
     networks:
