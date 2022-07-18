@@ -8,7 +8,9 @@ services:
       dockerfile: Dockerfile
     image: df/discovery:0.01
     ports:
-      - 8761:8761
+      - 8763:8761
+    networks:
+      - epic-network
 
       
   #API GATEWAY
@@ -18,11 +20,13 @@ services:
       dockerfile: Dockerfile
     image: df/gateway:0.01
     ports:
-      - 5256:5256
+      - 8081:5256
     environment:
       DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
+    networks:
+      - epic-network
   
   #AUTH SERVICE
   auth:
@@ -34,6 +38,8 @@ services:
       DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
+    networks:
+      - epic-network
 
   #ADMIN SERVICE
   #admin:
@@ -56,6 +62,8 @@ services:
       DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #COMMON SERVICE
   common:
@@ -67,6 +75,8 @@ services:
       DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #FD SERVICE
   fd:
@@ -78,6 +88,8 @@ services:
       DISCOVERY_URL: http://discovery:8761
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #Savings Pocket (SP) SERVICE
   #sp:
@@ -87,7 +99,7 @@ services:
   #  image: df/sp:0.01
   #  depends_on:
   #    - discovery
-      
-   
-      
-      
+
+networks:
+    epic-network:
+      driver: bridge
