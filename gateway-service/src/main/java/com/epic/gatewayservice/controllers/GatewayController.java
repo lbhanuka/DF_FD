@@ -26,6 +26,13 @@ public class GatewayController {
         return gatewayService.getResponseSecure(url,request,authString, authUrl);
     }
 
+    @PostMapping(value = "/fd/details/mobile", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFdDetailsMobile(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
+        String url = "http://FD-SERVICE/fd/details";
+        String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
+        return gatewayService.getResponseSecure(url,request,authString, authUrl);
+    }
+
     @PostMapping(value = "/savings/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getSavingsDetails(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
         String url = "http://BROKER-SERVICE/savings/details";

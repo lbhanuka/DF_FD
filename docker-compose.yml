@@ -8,7 +8,9 @@ services:
       dockerfile: Dockerfile
     image: df/discovery:0.01
     ports:
-      - 8761:8761
+      - 8763:8761
+    networks:
+      - epic-network
 
       
   #API GATEWAY
@@ -18,11 +20,16 @@ services:
       dockerfile: Dockerfile
     image: df/gateway:0.01
     ports:
-      - 5256:5256
+      - 8081:5256
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
+    networks:
+      - epic-network
   
   #AUTH SERVICE
   auth:
@@ -32,8 +39,13 @@ services:
     image: df/auth:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
+    networks:
+      - epic-network
 
   #ADMIN SERVICE
   #admin:
@@ -54,8 +66,13 @@ services:
     image: df/broker:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #COMMON SERVICE
   common:
@@ -65,8 +82,13 @@ services:
     image: df/common:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #FD SERVICE
   fd:
@@ -76,8 +98,13 @@ services:
     image: df/fd:0.01
     environment:
       DISCOVERY_URL: http://discovery:8761
+      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+      BACKEND_USERNAME: Duser
+      BACKEND_PASSWORD: Dialog@123
     depends_on:
       - discovery
+    networks:
+      - epic-network
       
   #Savings Pocket (SP) SERVICE
   #sp:
@@ -87,7 +114,7 @@ services:
   #  image: df/sp:0.01
   #  depends_on:
   #    - discovery
-      
-   
-      
-      
+
+networks:
+    epic-network:
+      driver: bridge
