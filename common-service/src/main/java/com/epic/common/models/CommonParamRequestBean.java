@@ -1,11 +1,13 @@
 package com.epic.common.models;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 public class CommonParamRequestBean {
 
-    //@NotNull(message = "Device Id cannot be null")
+    @NotNull(message = "Device Id cannot be null")
+    @NotEmpty(message = "Device Id cannot be empty")
     String deviceId;
 
     @NotNull(message = "category cannot be null")

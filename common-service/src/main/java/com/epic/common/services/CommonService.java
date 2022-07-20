@@ -52,25 +52,30 @@ public class CommonService {
         }
 
 
-        if (requestBean.getDeviceId() != null && !requestBean.getDeviceId().equals("") && requestBean.getCategory().equals("ALL")) {
+        if (requestBean.getDeviceId() != null && !requestBean.getDeviceId().equals("") && (requestBean.getCategory().equals("ALL") || requestBean.getCategory().equals("FD"))) {
 
             if (resultList != null && !resultList.isEmpty()) {
 
                 String nic = commonService.getProductType(requestBean.getDeviceId());
 
-                NICType nicType = NicValidations.checkNICType(nic);
+                if(nic != null){
+                    NICType nicType = NicValidations.checkNICType(nic);
 
-                if (Objects.equals(nicType, NICType.OLD)) {
+                    if (Objects.equals(nicType, NICType.OLD)) {
 
-                    String generatedNic = NicValidations.convertOldNicTONewNic(nic);
-                    setProductType(map, resultList, generatedNic);
+                        String generatedNic = NicValidations.convertOldNicTONewNic(nic);
+                        setProductType(map, resultList, generatedNic);
 
-                } else if (Objects.equals(nicType, NICType.NEW)) {
+                    } else if (Objects.equals(nicType, NICType.NEW)) {
 
-                    setProductType(map, resultList, nic);
+                        setProductType(map, resultList, nic);
 
-                } else {
-                    map.put("MESSAGE", "NIC INVALID");
+                    } else {
+                        map.put("MESSAGE", "CANNOT VALIDATE NIC FOR DEVICE ID");
+                        map.put("STATUS", "FAIL");
+                    }
+                }else {
+                    map.put("MESSAGE", "DEVICE ID NOT VALID");
                     map.put("STATUS", "FAIL");
                 }
 
