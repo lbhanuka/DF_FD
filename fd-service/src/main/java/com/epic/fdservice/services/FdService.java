@@ -6,10 +6,7 @@ import com.epic.fdservice.models.FdInstructionsResponseBean;
 import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.models.*;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
-import com.epic.fdservice.persistance.repository.FdDetailsRepo;
-import com.epic.fdservice.persistance.repository.FdInstructionImagesRepo;
-import com.epic.fdservice.persistance.repository.FdInstructionsRepo;
-import com.epic.fdservice.persistance.repository.FdRatesRepo;
+import com.epic.fdservice.persistance.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
@@ -45,6 +42,9 @@ public class FdService {
 
     @Autowired
     FdInstructionImagesRepo fdInstructionImagesRepo;
+
+    @Autowired
+    FdProductsRepo fdProductsRepo;
 
     @Autowired
     Validator validator;
@@ -257,5 +257,36 @@ public class FdService {
 
         return map;
 
+    }
+
+    public Map<String, Object> getAllowedFdProducts(FdProductRequestBean request) {
+        Map<String, Object> map = new HashMap<>();
+        List<FdProduct> resultList = null;
+
+        resultList = fdProductsRepo.getAllFdProducts("YES",request.getInterestType(), request.getProductType());
+
+        /*if(language != null && language.equals("E")){
+            resultList = fdInstructionsRepo.getAllInstructionsEnglish("ACT");//get all active instructions
+        }else if (language != null && language.equals("S")){
+            resultList = fdInstructionsRepo.getAllInstructionsSinhala("ACT");//get all active instructions
+        }else if (language != null && language.equals("T")) {
+            resultList = fdInstructionsRepo.getAllInstructionsTamil("ACT");//get all active instructions
+        }else {
+            map.put("MESSAGE", "INVALID LANGUAGE");
+            map.put("STATUS","BAD REQUEST");
+            return map;
+        }*/
+
+        if(resultList != null && !resultList.isEmpty()){
+
+            map.put("MESSAGE","FD OPENING INSTRUCTION DETAILS FETCHED");
+            map.put("STATUS","SUCCESS");
+            map.put("DATA",resultList);
+        } else {
+            map.put("MESSAGE","NO ALLOWED FD PRODUCTS FOUND");
+            map.put("STATUS","FAIL");
+        }
+
+        return map;
     }
 }

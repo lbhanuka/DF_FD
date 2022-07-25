@@ -21,6 +21,11 @@ public class FdController {
         return fdService.getSavingsAccountList(request);
     }
 
+    @PostMapping(value = "/fd/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFdList(@RequestBody HashMap<String,String> request) {
+        return fdService.getFDAccountList(request);
+    }
+
     @PostMapping(value = "/fd/calculation", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getFdInterestCalculation(@RequestBody HashMap<String,String> request) {
         return fdService.getFdInterestCalculation(request);
