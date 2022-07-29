@@ -89,6 +89,68 @@ public class FdService {
         return map;
     }
 
+    public Map<String, Object> getFdDetailsFinacle(FdDetailsFinacleRequestBean requestBean) {
+        Map<String, Object> map = new HashMap<>();
+        List<CrmFdDetailsBean> resultList = null;
+
+        Set<ConstraintViolation<FdDetailsFinacleRequestBean>> violations = validator.validate(requestBean);
+
+        if (!violations.isEmpty()) {
+            StringBuffer Msg = new StringBuffer();
+            for(ConstraintViolation<FdDetailsFinacleRequestBean> violation : violations){
+                //Msg.violation.getMessage());
+                if(!Msg.toString().isEmpty()){
+                    Msg.append("|");
+                }
+
+                Msg.append(violation.getMessage().replace("{value}", violation.getInvalidValue() == null ? "null" : violation.getInvalidValue().toString()));
+            }
+            map.put("MESSAGE",Msg);
+            map.put("STATUS","BAD REQUEST");
+            return map;
+        }
+
+        return callToBrokerService(requestBean);
+    }
+
+    private Map<String, Object> callToBrokerService(FdDetailsFinacleRequestBean request){
+
+        Map<String, Object> response = new HashMap<>();
+        HashMap<String,String> requestData = new HashMap<>();
+
+        if(request.getInqType().equals("DEVID")){
+            requestData.put("inqType","NIC");
+            requestData.put("inqValue",fdDetailsRepo.getNicByDeviceId(request.getInqValue()));
+        } else if (request.getInqType().equals("NIC")) {
+            requestData.put("inqType",request.getInqType());
+            requestData.put("inqValue",request.getInqValue());
+        } else {
+            response.put("MESSAGE","INVALID INQ TYPE");
+            response.put("STATUS","BAD REQUEST");
+            return response;
+        }
+
+        String url = "http://BROKER-SERVICE/fd/details";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
+
+        try {
+            ResponseEntity<FinacleFdDetailsResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FinacleFdDetailsResponseBean.class);
+            //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            response.put("STATUS","SUCCESS");
+            response.put("DATA",responseFromService.getBody().getRESPONSE_DATA());
+            response.put("MESSAGE","FD DETAILS FETCHED");
+            return response;
+        } catch(HttpStatusCodeException e) {
+            response.put("STATUS","FAILED");
+            response.put("MESSAGE",e.getResponseBodyAsString());
+            return response;
+        }
+    }
+
     public Map<String, Object> getAllActiveInstructions(String language) {
         Map<String, Object> map = new HashMap<>();
         List<FdInstructionsResponseBean> resultList = null;

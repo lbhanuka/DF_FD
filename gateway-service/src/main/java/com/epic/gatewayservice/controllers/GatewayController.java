@@ -31,10 +31,10 @@ public class GatewayController {
         return gatewayService.getResponseSecure(url,request,authString, authUrl);
     }
 
-    @PostMapping(value = "/fd/details/mobile", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/fd/details/finacle", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getFdDetailsMobile(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
         log.info("Mobile FD Details request received by Gateway Service");
-        String url = "http://FD-SERVICE/fd/details";
+        String url = "http://FD-SERVICE/fd/details/finacle";
         String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
         return gatewayService.getResponseSecure(url,request,authString, authUrl);
     }

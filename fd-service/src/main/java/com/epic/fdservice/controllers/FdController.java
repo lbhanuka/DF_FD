@@ -1,6 +1,7 @@
 package com.epic.fdservice.controllers;
 
 import com.epic.fdservice.models.FdCreateRequestBean;
+import com.epic.fdservice.models.FdDetailsFinacleRequestBean;
 import com.epic.fdservice.models.FdDetailsRequestBean;
 import com.epic.fdservice.models.FdProductRequestBean;
 import com.epic.fdservice.services.FdService;
@@ -26,6 +27,24 @@ public class FdController {
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = fdService.getFdDetails(requestBean);
+
+        if(map.get("STATUS").equals("UNAUTHORISED")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+        }else if (map.get("STATUS").equals("BAD REQUEST")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAIL")){
+            responseEntity = new ResponseEntity<>(map, HttpStatus.OK);
+        }
+
+        return responseEntity;
+    }
+
+    @RequestMapping(value = "/details/finacle", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFdDetailsFinacle(@RequestBody FdDetailsFinacleRequestBean request){
+
+        ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        Map<String, Object> map = fdService.getFdDetailsFinacle(request);
 
         if(map.get("STATUS").equals("UNAUTHORISED")){
             responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);

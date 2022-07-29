@@ -21,6 +21,9 @@ services:
     image: df/gateway:0.01
     ports:
       - 8081:5256
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
     environment:
       DISCOVERY_URL: http://discovery:8761
       BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
@@ -32,79 +35,79 @@ services:
       - epic-network
   
   #AUTH SERVICE
-  auth:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
-    image: df/auth:0.01
-    environment:
-      DISCOVERY_URL: http://discovery:8761
-      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
-      BACKEND_USERNAME: Duser
-      BACKEND_PASSWORD: Dialog@123
-    depends_on:
-      - discovery
-    networks:
-      - epic-network
-
-  #ADMIN SERVICE
-  #admin:
+  #auth:
   #  build:
-  #    context: ./admin-service
+  #    context: ./auth-service
   #    dockerfile: Dockerfile
-  #  image: df/admin:0.01
-  #  ports:
-  #    - 8383:8383
+  #  image: df/auth:0.01
+  #  environment:
+  #    DISCOVERY_URL: http://discovery:8761
+  #    BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+  #    BACKEND_USERNAME: Duser
+  #    BACKEND_PASSWORD: Dialog@123
   #  depends_on:
   #    - discovery
-      
-  #BROKER SERVICE
-  broker:
-    build:
-      context: ./broker-service
-      dockerfile: Dockerfile
-    image: df/broker:0.01
-    environment:
-      DISCOVERY_URL: http://discovery:8761
-      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
-      BACKEND_USERNAME: Duser
-      BACKEND_PASSWORD: Dialog@123
-    depends_on:
-      - discovery
-    networks:
-      - epic-network
-      
-  #COMMON SERVICE
-  common:
-    build:
-      context: ./common-service
-      dockerfile: Dockerfile
-    image: df/common:0.01
-    environment:
-      DISCOVERY_URL: http://discovery:8761
-      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
-      BACKEND_USERNAME: Duser
-      BACKEND_PASSWORD: Dialog@123
-    depends_on:
-      - discovery
-    networks:
-      - epic-network
-      
-  #FD SERVICE
-  fd:
-    build:
-      context: ./fd-service
-      dockerfile: Dockerfile
-    image: df/fd:0.01
-    environment:
-      DISCOVERY_URL: http://discovery:8761
-      BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
-      BACKEND_USERNAME: Duser
-      BACKEND_PASSWORD: Dialog@123
-    depends_on:
-      - discovery
-    networks:
-      - epic-network
+  #  networks:
+  #    - epic-network
+#
+  ##ADMIN SERVICE
+  ##admin:
+  ##  build:
+  ##    context: ./admin-service
+  ##    dockerfile: Dockerfile
+  ##  image: df/admin:0.01
+  ##  ports:
+  ##    - 8383:8383
+  ##  depends_on:
+  ##    - discovery
+  #
+  ##BROKER SERVICE
+  #broker:
+  #  build:
+  #    context: ./broker-service
+  #    dockerfile: Dockerfile
+  #  image: df/broker:0.01
+  #  environment:
+  #    DISCOVERY_URL: http://discovery:8761
+  #    BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+  #    BACKEND_USERNAME: Duser
+  #    BACKEND_PASSWORD: Dialog@123
+  #  depends_on:
+  #    - discovery
+  #  networks:
+  #    - epic-network
+  #
+  ##COMMON SERVICE
+  #common:
+  #  build:
+  #    context: ./common-service
+  #    dockerfile: Dockerfile
+  #  image: df/common:0.01
+  #  environment:
+  #    DISCOVERY_URL: http://discovery:8761
+  #    BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+  #    BACKEND_USERNAME: Duser
+  #    BACKEND_PASSWORD: Dialog@123
+  #  depends_on:
+  #    - discovery
+  #  networks:
+  #    - epic-network
+  #
+  ##FD SERVICE
+  #fd:
+  #  build:
+  #    context: ./fd-service
+  #    dockerfile: Dockerfile
+  #  image: df/fd:0.01
+  #  environment:
+  #    DISCOVERY_URL: http://discovery:8761
+  #    BACKEND_DB_URL: jdbc:mysql://127.0.0.1:33060/Dialogdb
+  #    BACKEND_USERNAME: Duser
+  #    BACKEND_PASSWORD: Dialog@123
+  #  depends_on:
+  #    - discovery
+  #  networks:
+  #    - epic-network
       
   #Savings Pocket (SP) SERVICE
   #sp:
@@ -116,5 +119,5 @@ services:
   #    - discovery
 
 networks:
-    epic-network:
-      driver: bridge
+  epic-network:
+    driver: bridge

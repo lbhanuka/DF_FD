@@ -17,4 +17,7 @@ public interface FdDetailsRepo extends JpaRepository<FdDetailsEntity,String> {
 
     @Query("select max(e.requestid) from FdDetailsEntity e")
     String getMaxId();
+
+    @Query("select e.idnumber from ShMobileUserEntity e where e.deviceid = ?1")
+    String getNicByDeviceId(String deviceId);
 }

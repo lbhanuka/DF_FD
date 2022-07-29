@@ -32,6 +32,12 @@ public class FdService {
     @Value("${config.finacle.grant_type}")
     public String grantType;
 
+    @Value("${config.finacle.url}")
+    public String finacleURL;
+
+    @Value("${config.finacle.token.url}")
+    public String finacleTokenURL;
+
     private final WebClient webClient;
 
     private String finacleToken;
@@ -59,7 +65,6 @@ public class FdService {
 
         TokenResponseBean tokenResponseBean = new TokenResponseBean();
 
-        String url  = "https://stgezsavings.ezloan.lk/ezsavings/api/uaa/oauth/token";
         //ResponseEntity<?> response = this.getResponse(url, bean, null);
 
         /*Mono<TokenResponseBean> responseBeanMono = webClient.post()
@@ -71,7 +76,7 @@ public class FdService {
         tokenResponseBean = responseBeanMono.block();*/
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         HttpEntity<Object> requestEntity = new HttpEntity<>(bean);
-        ResponseEntity<TokenResponseBean> responseFinacle = restTemplate.postForEntity(url, requestEntity, TokenResponseBean.class);
+        ResponseEntity<TokenResponseBean> responseFinacle = restTemplate.postForEntity(finacleTokenURL, requestEntity, TokenResponseBean.class);
 
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
@@ -97,11 +102,34 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
-        String url = "https://stgezsavings.ezloan.lk/ezsavings/api/pas/openapi";
-        ResponseEntity<?> response = getResponse(url, requestBean, this.finacleToken);
+        ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
-            ResponseEntity<?> responseNew = getResponse(url, requestBean, this.getToken());
+            ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            return responseNew;
+        }
+
+        return response;
+    }
+
+    public ResponseEntity<?> getFDAccountList(HashMap<String,String> inputs){
+
+        FinacleRequestBean requestBean = new FinacleRequestBean();
+        requestBean.setApp_id("APP");
+        requestBean.setRequest_id("FD_INQ");
+
+        HashMap<String,String> requestData = new HashMap<>();
+
+        requestData.put("ReqType","INQ");
+        requestData.put("InqType",inputs.get("inqType"));
+        requestData.put("InqVal",inputs.get("inqValue"));
+
+        requestBean.setRequest_data(requestData);
+
+        ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
+
+        if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }
 
@@ -141,11 +169,10 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
-        String url = "https://stgezsavings.ezloan.lk/ezsavings/api/pas/openapi";
-        ResponseEntity<?> response = getResponse(url, requestBean, this.finacleToken);
+        ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
-            ResponseEntity<?> responseNew = getResponse(url, requestBean, this.getToken());
+            ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }
 
@@ -174,19 +201,13 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
-        String url = "https://stgezsavings.ezloan.lk/ezsavings/api/pas/openapi";
-        ResponseEntity<?> response = getResponse(url, requestBean, this.finacleToken);
+        ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
-            ResponseEntity<?> responseNew = getResponse(url, requestBean, this.getToken());
+            ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }
 
         return response;
-    }
-
-    public ResponseEntity<?> getFDAccountList(HashMap<String, String> request) {
-
-return null;
     }
 }
