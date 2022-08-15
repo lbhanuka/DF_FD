@@ -11,6 +11,7 @@ public class FdCreateRequestBean {
     String renewInstructions;
     String operativeAcid;
     String repaymentAcid;
+    String deviceId;
 
     public String getSchmCode() {
         return schmCode;
@@ -82,5 +83,13 @@ public class FdCreateRequestBean {
 
     public void setRenewInstructions(String renewInstructions) {
         this.renewInstructions = renewInstructions;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 }

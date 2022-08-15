@@ -8,6 +8,8 @@ import com.epic.authservice.util.varlist.MessageVarList;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,8 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private Environment env;
 
@@ -34,7 +38,7 @@ public class AuthController {
 
     @RequestMapping(value = "/token", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAppAccessToken(@RequestBody @Valid AccessTokenRequestBean requestBean){
-
+        log.info("Get App access token request received by Auth Service");
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = authService.getAppAccessToken(requestBean);
@@ -53,9 +57,10 @@ public class AuthController {
     };
 
     @RequestMapping(value = "/availability/{service}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> checkUserAvailibility(@RequestBody UserAvailibilityRequestBean requestBean,
+    public ResponseEntity<?> checkUserAvailability(@RequestBody UserAvailibilityRequestBean requestBean,
                                                    @PathVariable("service") String serviceType){
 
+        log.info("Availability request received by Auth Service");
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = authService.checkUserAvailibility(requestBean, serviceType);
@@ -73,7 +78,7 @@ public class AuthController {
 
     @RequestMapping(value = "/validate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> checkTokenValidity(@RequestHeader(value = "authorization") String authString){
-
+        log.info("Token validate request received by Auth Service");
         ResponseEntity<?> responseEntity;
 
         String result = authService.checkTokenValidity(authString);
@@ -85,13 +90,14 @@ public class AuthController {
 
     @RequestMapping(value = "/obtain/jwt", method = RequestMethod.POST)
     public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString,@RequestBody JwtRequestBean requestBean){
-        System.out.println("------------------------------------------------>> Token Controller.getJsonWebToken");
+        log.info("Obtain JWT request received by Auth Service");
         String token;
         ResponseBean responseBean = new ResponseBean();
 
         try {
 
             if (commonService.isAuthorisedAccess(authString, requestBean.getDeviceId())){
+                boolean success = commonService.updateMobileUser(requestBean);
                 token = commonService.getJWT(authString, requestBean.getDeviceId());
                 Token tokenBean = new Token();
                 tokenBean.setToken(token);
@@ -120,7 +126,7 @@ public class AuthController {
 
     @RequestMapping(value = "/validate/jwt", method = RequestMethod.POST)
     public ResponseEntity<?> validateJsonWebToken(@RequestHeader(value = "authorization") String authString){
-
+        log.info("Validate JWT request received by Auth Service");
         ResponseEntity<?> responseEntity;
 
         String result = commonService.validateJWT(authString);

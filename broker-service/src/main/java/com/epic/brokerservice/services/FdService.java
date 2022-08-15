@@ -92,7 +92,7 @@ public class FdService {
 
         FinacleRequestBean requestBean = new FinacleRequestBean();
         requestBean.setApp_id("APP");
-        requestBean.setRequest_id("SME_SAV_ACCT_INQ");
+        requestBean.setRequest_id("TDA_SAV_ACCT_INQ");
 
         HashMap<String,String> requestData = new HashMap<>();
 

@@ -1,6 +1,8 @@
 package com.epic.common.controllers;
 
 import com.epic.common.models.CommonParamRequestBean;
+import com.epic.common.models.PushNotificationRequestBean;
+import com.epic.common.models.SavingsDetailsFinacleRequestBean;
 import com.epic.common.services.CommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -36,6 +39,16 @@ public class CommonController {
         }
 
         return responseEntity;
+    }
+
+    @RequestMapping(value = "/send/inapp", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> sendInAppPushNotification(@RequestBody PushNotificationRequestBean requestBean){
+        return commonService.sendInAppPushNotification(requestBean);
+    }
+
+    @RequestMapping(value = "/savings/details", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getSavingsListFromFinacle(@RequestBody SavingsDetailsFinacleRequestBean request){
+        return commonService.getSavingsAccountList(request);
     }
 
 }

@@ -133,4 +133,5 @@ public class FdController {
     public ResponseEntity<?> createFdAccount(@RequestBody FdCreateRequestBean request) {
         return fdService.createFdAccount(request);
     }
+
 }

@@ -119,8 +119,15 @@ public class FdService {
         HashMap<String,String> requestData = new HashMap<>();
 
         if(request.getInqType().equals("DEVID")){
-            requestData.put("inqType","NIC");
-            requestData.put("inqValue",fdDetailsRepo.getNicByDeviceId(request.getInqValue()));
+            MobileUserBean mobileUserBean = fdDetailsRepo.getNicByDeviceId(request.getInqValue());
+            if(mobileUserBean != null){
+                requestData.put("inqType","NIC");
+                requestData.put("inqValue",mobileUserBean.getNic());
+            }else {
+                response.put("MESSAGE","INVALID DEVICE ID");
+                response.put("STATUS","BAD REQUEST");
+                return response;
+            }
         } else if (request.getInqType().equals("NIC")) {
             requestData.put("inqType",request.getInqType());
             requestData.put("inqValue",request.getInqValue());
@@ -235,15 +242,44 @@ public class FdService {
         HashMap<String,String> finacleResponse = callToBrokerService(request);
 
         if(finacleResponse.get("STATUS").equals("SUCCESS")){
+            if(request.getDeviceId() != null && !request.getDeviceId().isEmpty()){
+                MobileUserBean mobileUserBean = fdDetailsRepo.getNicByDeviceId(request.getDeviceId());
+                entity.setNic(mobileUserBean.getNic());
+
+                //send push notification
+                PushNotificationRequestBean pushNotificationRequestBean = new PushNotificationRequestBean();
+                pushNotificationRequestBean.setMobileNumber(mobileUserBean.getMobileNumber());
+                pushNotificationRequestBean.setMessageType("FD_CREATE");
+                this.sendPushNotification(pushNotificationRequestBean);
+
+            }
             entity.setFdaccountnumber(finacleResponse.get("ACCOUNTNO"));
             String maxId = fdDetailsRepo.getMaxId();
             Integer nextId = Integer.parseInt(maxId) + 1;
             entity.setRequestid(nextId.toString());
             fdDetailsRepo.save(entity);
+        } else {
+
         }
         ResponseEntity<?> response = new ResponseEntity<>(finacleResponse,HttpStatus.OK);
 
         return response;
+    }
+
+    private void sendPushNotification(PushNotificationRequestBean requestBean) {
+        String url = "http://COMMON-SERVICE/common/send/inapp";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestBean, headers);
+
+        try {
+            ResponseEntity<PushNotificationResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, PushNotificationResponseBean.class);
+            //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+        } catch(HttpStatusCodeException e) {
+            e.printStackTrace();
+        }
     }
 
     private HashMap<String,String> callToBrokerService(FdCreateRequestBean request){

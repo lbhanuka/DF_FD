@@ -1,5 +1,8 @@
 package com.epic.authservice.services;
 
+import com.epic.authservice.bean.JwtRequestBean;
+import com.epic.authservice.bean.UserAvailibilityRequestBean;
+import com.epic.authservice.persistance.entity.ShMobileUserEntity;
 import com.epic.authservice.persistance.repository.MobileUserRepo;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,5 +123,19 @@ public class CommonService {
             //client.put("isauthorised","0");
             return "INVALID";
         }
+    }
+
+    public boolean updateMobileUser(JwtRequestBean requestBean){
+
+        ShMobileUserEntity entity = new ShMobileUserEntity();
+
+        entity.setDeviceid(requestBean.getDeviceId());
+        entity.setIdnumber(requestBean.getCustomerNic());
+        entity.setMobilenumber(requestBean.getMobileNumber());
+        entity.setLanguage("E");
+
+        mobileUserRepo.save(entity);
+
+        return true;
     }
 }

@@ -1,12 +1,15 @@
 package com.epic.common.services;
 
-import com.epic.common.models.CommonParamBean;
-import com.epic.common.models.CommonParamRequestBean;
-import com.epic.common.models.NICType;
+import com.epic.common.models.*;
 import com.epic.common.persistance.repository.CommonParamRepo;
 import com.epic.common.util.NicValidations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -17,10 +20,36 @@ import java.util.*;
 public class CommonService {
 
     @Autowired
-    CommonParamRepo commonService;
+    CommonParamRepo commonParamRepo;
 
     @Autowired
     Validator validator;
+
+    @Autowired
+    protected RestTemplate restTemplate;
+
+    @Value("${config.push.auth_type}")
+    public String authType;
+
+    @Value("${config.push.client_id}")
+    public String clientId;
+
+    @Value("${config.push.client_secret}")
+    public String clientSecret;
+
+    @Value("${config.push.secret}")
+    public String secret;
+
+    @Value("${config.push.grant_type}")
+    public String grantType;
+
+    @Value("${config.push.url}")
+    public String pushURL;
+
+    @Value("${config.push.token.url}")
+    public String pushTokenURL;
+
+    private String pushToken;
 
     public Map<String, Object> getParams(CommonParamRequestBean requestBean) throws Exception {
 
@@ -44,11 +73,11 @@ public class CommonService {
         }
 
         if (requestBean.getCategory().equals("FD")) {
-            resultList = commonService.getUnderCategory(requestBean.getCategory());
+            resultList = commonParamRepo.getUnderCategory(requestBean.getCategory());
         } else if (requestBean.getCategory().equals("SP")) {
-            resultList = commonService.getUnderCategory(requestBean.getCategory());
+            resultList = commonParamRepo.getUnderCategory(requestBean.getCategory());
         } else if (requestBean.getCategory().equals("ALL")) {
-            resultList = commonService.getAll();
+            resultList = commonParamRepo.getAll();
         }
 
 
@@ -56,7 +85,7 @@ public class CommonService {
 
             if (resultList != null && !resultList.isEmpty()) {
 
-                String nic = commonService.getProductType(requestBean.getDeviceId());
+                String nic = commonParamRepo.getProductType(requestBean.getDeviceId());
 
                 if(nic != null){
                     NICType nicType = NicValidations.checkNICType(nic);
@@ -135,6 +164,103 @@ public class CommonService {
     }
 
 
+    public String getToken() {
+
+        TokenBean bean = new TokenBean();
+
+        bean.setAuth_type(authType);
+        bean.setClient_id(clientId);
+        bean.setSecret(secret);
+        bean.setGrant_type(grantType);
+        bean.setClient_secret(clientSecret);
+
+        TokenResponseBean tokenResponseBean = new TokenResponseBean();
+
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        HttpEntity<Object> requestEntity = new HttpEntity<>(bean);
+        ResponseEntity<TokenResponseBean> responseFinacle = restTemplate.postForEntity(pushTokenURL, requestEntity, TokenResponseBean.class);
+
+        //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
+        if(responseFinacle.getStatusCode() == HttpStatus.OK){
+            tokenResponseBean = responseFinacle.getBody();
+        }
+
+        this.pushToken = "Bearer " + tokenResponseBean.getAccess_token();
+
+        return pushToken;
+    }
+
+    public ResponseEntity<?> sendInAppPushNotification(PushNotificationRequestBean requestBean){
+
+        ResponseEntity<?> response = getResponse(pushURL, requestBean, this.pushToken);
+
+        if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            ResponseEntity<?> responseNew = getResponse(pushURL, requestBean, this.getToken());
+            return responseNew;
+        }
+
+        return response;
+    }
+
+    public ResponseEntity<?> getResponse(String url, Object requestParam, String authString) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", authString);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
+
+        try {
+            ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+
+            ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+            return response;
+        } catch(HttpStatusCodeException e) {
+            ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
+            return response;
+        }
+    }
+
+    public ResponseEntity<?> getSavingsAccountList(SavingsDetailsFinacleRequestBean request) {
+        return this.callToBrokerService(request);
+    }
+
+    private ResponseEntity<?>callToBrokerService(SavingsDetailsFinacleRequestBean request){
+
+        Map<String, Object> response = new HashMap<>();
+        HashMap<String,String> requestData = new HashMap<>();
+
+        if(request.getInqType().equals("DEVID")){
+            MobileUserBean mobileUserBean = commonParamRepo.getNicByDeviceId(request.getInqValue());
+            if(mobileUserBean != null){
+                requestData.put("inqType","NIC");
+                requestData.put("inqValue",mobileUserBean.getNic());
+            }else {
+                response.put("MESSAGE","INVALID DEVICE ID");
+                response.put("STATUS","BAD REQUEST");
+                ResponseEntity<?> responseEntity = new ResponseEntity<>(response,HttpStatus.OK);
+                return responseEntity;
+            }
+        } else if (request.getInqType().equals("NIC")) {
+            requestData.put("inqType",request.getInqType());
+            requestData.put("inqValue",request.getInqValue());
+        } else {
+            response.put("MESSAGE","INVALID INQ TYPE");
+            response.put("STATUS","BAD REQUEST");
+            ResponseEntity<?> responseEntity = new ResponseEntity<>(response,HttpStatus.OK);
+            return responseEntity;
+        }
+
+        String url = "http://BROKER-SERVICE/savings/details";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
+
+        ResponseEntity<?>  responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+        return responseFromService;
+    }
 }
 
 

@@ -50,7 +50,7 @@ public class GatewayController {
     @PostMapping(value = "/savings/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getSavingsDetails(@RequestHeader(value = "authorization") String authString,@RequestBody Object request) {
         log.info("Savings Account Details request received by Gateway Service");
-        String url = "http://BROKER-SERVICE/savings/details";
+        String url = "http://COMMON-SERVICE/common/savings/details";
         String authUrl = "http://AUTH-SERVICE/auth/validate/jwt";
         return gatewayService.getResponseSecure(url,request,authString, authUrl);
     }
