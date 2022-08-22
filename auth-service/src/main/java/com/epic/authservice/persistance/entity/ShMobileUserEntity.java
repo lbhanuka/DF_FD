@@ -30,6 +30,9 @@ public class ShMobileUserEntity {
     @Basic
     @Column(name = "SCOPE")
     private String scope;
+    @Basic
+    @Column(name = "EMAIL")
+    private String email;
 
     public String getDeviceid() {
         return deviceid;
@@ -93,6 +96,14 @@ public class ShMobileUserEntity {
 
     public void setIdnumberApp(String idnumberApp) {
         this.idnumberApp = idnumberApp;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @Override

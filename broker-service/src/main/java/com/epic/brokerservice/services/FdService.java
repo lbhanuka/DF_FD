@@ -40,7 +40,7 @@ public class FdService {
 
     private final WebClient webClient;
 
-    private String finacleToken;
+    public String finacleToken;
 
     @Autowired
     protected RestTemplate restTemplate;
@@ -198,6 +198,30 @@ public class FdService {
         requestData.put("operativeAcid",inputs.get("operativeAcid"));
         requestData.put("repaymentAcid",inputs.get("repaymentAcid"));
         requestData.put("freeTextField1",inputs.get("freeTextField1"));
+
+        requestBean.setRequest_data(requestData);
+
+        ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
+
+        if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            return responseNew;
+        }
+
+        return response;
+    }
+
+    public ResponseEntity<?> getFinacleCustomerDetails(HashMap<String, String> request) {
+
+        FinacleRequestBean requestBean = new FinacleRequestBean();
+        requestBean.setApp_id("APP");
+        requestBean.setRequest_id("TDA_CUS_INQ");
+
+        HashMap<String,String> requestData = new HashMap<>();
+
+        requestData.put("ReqType","INQ");
+        requestData.put("InqType",request.get("inqType"));
+        requestData.put("InqVal",request.get("inqValue"));
 
         requestBean.setRequest_data(requestData);
 

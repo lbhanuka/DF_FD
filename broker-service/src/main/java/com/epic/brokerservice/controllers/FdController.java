@@ -31,6 +31,11 @@ public class FdController {
         return fdService.getFdInterestCalculation(request);
     }
 
+    @PostMapping(value = "/customer/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getFinacleCustomerDetails(@RequestBody HashMap<String,String> request) {
+        return fdService.getFinacleCustomerDetails(request);
+    }
+
     @PostMapping(value = "/fd/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFdAccount(@RequestBody HashMap<String,String> request) {
         return fdService.createFdAccount(request);
