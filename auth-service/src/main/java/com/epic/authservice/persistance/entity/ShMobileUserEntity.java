@@ -16,6 +16,9 @@ public class ShMobileUserEntity {
     @Column(name = "IDNUMBER")
     private String idnumber;
     @Basic
+    @Column(name = "IDNUMBER_APP")
+    private String idnumberApp;
+    @Basic
     @Column(name = "LANGUAGE")
     private String language;
     @Basic
@@ -82,6 +85,14 @@ public class ShMobileUserEntity {
 
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    public String getIdnumberApp() {
+        return idnumberApp;
+    }
+
+    public void setIdnumberApp(String idnumberApp) {
+        this.idnumberApp = idnumberApp;
     }
 
     @Override

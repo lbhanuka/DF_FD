@@ -1,5 +1,7 @@
 package com.epic.fdservice.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class FdCreateRequestBean {
 
     String schmCode;
@@ -12,6 +14,8 @@ public class FdCreateRequestBean {
     String operativeAcid;
     String repaymentAcid;
     String deviceId;
+    @JsonProperty("TCVersion")
+    String TCVersion;
 
     public String getSchmCode() {
         return schmCode;
@@ -91,5 +95,13 @@ public class FdCreateRequestBean {
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
+    }
+
+    public String getTCVersion() {
+        return TCVersion;
+    }
+
+    public void setTCVersion(String TCVersion) {
+        this.TCVersion = TCVersion;
     }
 }

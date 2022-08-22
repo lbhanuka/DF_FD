@@ -238,6 +238,7 @@ public class FdService {
         entity.setSchemecode(request.getSchmCode());
         entity.setRenewalinstruction(request.getRenewInstructions());
         entity.setTenure(Integer.parseInt(request.getDepPerdInMths()));
+        entity.setTermversion(request.getTCVersion());
 
         HashMap<String,String> finacleResponse = callToBrokerService(request);
 

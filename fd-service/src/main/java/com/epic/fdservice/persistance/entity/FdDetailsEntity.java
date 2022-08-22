@@ -48,6 +48,9 @@ public class FdDetailsEntity {
     @Basic
     @Column(name = "NIC")
     private String nic;
+    @Basic
+    @Column(name = "TERMVERSION")
+    private String termversion;
 
     public String getRequestid() {
         return requestid;
@@ -151,6 +154,14 @@ public class FdDetailsEntity {
 
     public void setNic(String nic) {
         this.nic = nic;
+    }
+
+    public String getTermversion() {
+        return termversion;
+    }
+
+    public void setTermversion(String termversion) {
+        this.termversion = termversion;
     }
 
     @Override
