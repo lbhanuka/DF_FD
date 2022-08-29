@@ -150,6 +150,16 @@ public class FdService {
             response.put("STATUS","SUCCESS");
             response.put("DATA",responseFromService.getBody().getRESPONSE_DATA());
             response.put("MESSAGE","FD DETAILS FETCHED");
+
+            if(responseFromService.getBody().getSTATUS() != null && responseFromService.getBody().getSTATUS().equals("SUCCESS")){
+                response.put("STATUS","SUCCESS");
+                response.put("DATA",responseFromService.getBody().getRESPONSE_DATA());
+                response.put("MESSAGE","FD DETAILS FETCHED");
+            } else {
+                response.put("STATUS","FAILED");
+                response.put("DATA",null);
+                response.put("MESSAGE","FINACLE MSG: " + responseFromService.getBody().getMESSAGE());
+            }
             return response;
         } catch(HttpStatusCodeException e) {
             response.put("STATUS","FAILED");

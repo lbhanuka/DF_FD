@@ -11,6 +11,8 @@ public class FinacleFdDetailsResponseBean {
     String STATUS;
     @JsonProperty("RESPONSE_DATA")
     Map<String,Object> RESPONSE_DATA;
+    @JsonProperty("MESSAGE")
+    String MESSAGE;
 
     public String getSTATUS() {
         return STATUS;
@@ -26,5 +28,13 @@ public class FinacleFdDetailsResponseBean {
 
     public void setRESPONSE_DATA(Map<String, Object> RESPONSE_DATA) {
         this.RESPONSE_DATA = RESPONSE_DATA;
+    }
+
+    public String getMESSAGE() {
+        return MESSAGE;
+    }
+
+    public void setMESSAGE(String MESSAGE) {
+        this.MESSAGE = MESSAGE;
     }
 }

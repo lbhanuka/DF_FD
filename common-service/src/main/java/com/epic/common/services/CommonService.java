@@ -4,6 +4,7 @@ import com.epic.common.models.*;
 import com.epic.common.persistance.repository.CommonParamRepo;
 import com.epic.common.util.NicValidations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -26,7 +27,12 @@ public class CommonService {
     Validator validator;
 
     @Autowired
-    protected RestTemplate restTemplate;
+    @Qualifier("internalCalls")
+    protected RestTemplate restTemplateInternal;
+
+    @Autowired
+    @Qualifier("externalCalls")
+    protected RestTemplate restTemplateExternal;
 
     @Value("${config.push.auth_type}")
     public String authType;
@@ -176,9 +182,9 @@ public class CommonService {
 
         TokenResponseBean tokenResponseBean = new TokenResponseBean();
 
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        restTemplateExternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         HttpEntity<Object> requestEntity = new HttpEntity<>(bean);
-        ResponseEntity<TokenResponseBean> responseFinacle = restTemplate.postForEntity(pushTokenURL, requestEntity, TokenResponseBean.class);
+        ResponseEntity<TokenResponseBean> responseFinacle = restTemplateExternal.postForEntity(pushTokenURL, requestEntity, TokenResponseBean.class);
 
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
@@ -192,10 +198,10 @@ public class CommonService {
 
     public ResponseEntity<?> sendInAppPushNotification(PushNotificationRequestBean requestBean){
 
-        ResponseEntity<?> response = getResponse(pushURL, requestBean, this.pushToken);
+        ResponseEntity<?> response = getResponseExternal(pushURL, requestBean, this.pushToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
-            ResponseEntity<?> responseNew = getResponse(pushURL, requestBean, this.getToken());
+            ResponseEntity<?> responseNew = getResponseExternal(pushURL, requestBean, this.getToken());
             return responseNew;
         }
 
@@ -206,12 +212,12 @@ public class CommonService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", authString);
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        restTemplateInternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
 
         try {
-            ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            ResponseEntity<String> responseFromService = restTemplateInternal.postForEntity(url, requestEntity, String.class);
 
             ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
             return response;
@@ -223,6 +229,25 @@ public class CommonService {
 
     public ResponseEntity<?> getSavingsAccountList(SavingsDetailsFinacleRequestBean request) {
         return this.callToBrokerService(request);
+    }
+
+    public ResponseEntity<?> getResponseExternal(String url, Object requestParam, String authString) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", authString);
+        restTemplateExternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
+
+        try {
+            ResponseEntity<String> responseFromService = restTemplateExternal.postForEntity(url, requestEntity, String.class);
+
+            ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+            return response;
+        } catch(HttpStatusCodeException e) {
+            ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
+            return response;
+        }
     }
 
     private ResponseEntity<?>callToBrokerService(SavingsDetailsFinacleRequestBean request){
@@ -254,11 +279,11 @@ public class CommonService {
         String url = "http://BROKER-SERVICE/savings/details";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        restTemplateInternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
 
-        ResponseEntity<?>  responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+        ResponseEntity<?>  responseFromService = restTemplateInternal.postForEntity(url, requestEntity, String.class);
         return responseFromService;
     }
 }

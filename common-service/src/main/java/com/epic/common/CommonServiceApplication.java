@@ -16,8 +16,13 @@ public class CommonServiceApplication {
 	}
 
 	@LoadBalanced
-	@Bean
-	RestTemplate restTemplate() {
+	@Bean("internalCalls")
+	RestTemplate restTemplateInternal() {
+		return new RestTemplate();
+	}
+
+	@Bean("externalCalls")
+	RestTemplate restTemplateExternal() {
 		return new RestTemplate();
 	}
 }

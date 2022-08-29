@@ -50,7 +50,7 @@ public class FdController {
             responseEntity = new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
         }else if (map.get("STATUS").equals("BAD REQUEST")){
             responseEntity = new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
-        }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAIL")){
+        }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAILED")){
             responseEntity = new ResponseEntity<>(map, HttpStatus.OK);
         }
 
