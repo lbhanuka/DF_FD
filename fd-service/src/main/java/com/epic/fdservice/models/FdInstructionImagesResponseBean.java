@@ -1,7 +1,5 @@
 package com.epic.fdservice.models;
 
-import com.mysql.cj.jdbc.Blob;
-
 public class FdInstructionImagesResponseBean {
 
     byte[] image;
