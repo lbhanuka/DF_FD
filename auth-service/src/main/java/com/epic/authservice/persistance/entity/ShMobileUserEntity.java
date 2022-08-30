@@ -1,6 +1,7 @@
 package com.epic.authservice.persistance.entity;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
@@ -33,6 +34,13 @@ public class ShMobileUserEntity {
     @Basic
     @Column(name = "EMAIL")
     private String email;
+    @Basic
+    @Column(name = "CREATEDTIME",updatable = false,insertable = false)
+    private Timestamp createdtime;
+    @Basic
+    @Column(name = "LASTUPDATEDTIME",insertable = false)
+    private Timestamp lastupdatedtime;
+
 
     public String getDeviceid() {
         return deviceid;
@@ -104,6 +112,22 @@ public class ShMobileUserEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Timestamp getCreatedtime() {
+        return createdtime;
+    }
+
+    public void setCreatedtime(Timestamp createdtime) {
+        this.createdtime = createdtime;
+    }
+
+    public Timestamp getLastupdatedtime() {
+        return lastupdatedtime;
+    }
+
+    public void setLastupdatedtime(Timestamp lastupdatedtime) {
+        this.lastupdatedtime = lastupdatedtime;
     }
 
     @Override

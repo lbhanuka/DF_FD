@@ -19,6 +19,7 @@ import javax.validation.Validator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -166,11 +167,12 @@ public class AuthService {
         ShMobileUserEntity entity = new ShMobileUserEntity();
 
         entity.setDeviceid(requestBean.getDeviceId());
-        entity.setIdnumber(requestBean.getCustomerNic());
+        entity.setIdnumberApp(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setLanguage(requestBean.getLanguage());
         entity.setToken(token);
         entity.setTokenexpiration(tokenExpTimeInMilis);
+        entity.setLastupdatedtime(new Timestamp(System.currentTimeMillis()));
 
         mobileUserRepo.save(entity);
     }

@@ -18,6 +18,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.UnsupportedEncodingException;
+import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -139,13 +140,14 @@ public class CommonService {
 
         if(email == null) return false;
 
-        ShMobileUserEntity entity = new ShMobileUserEntity();
+        ShMobileUserEntity entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
 
-        entity.setDeviceid(requestBean.getDeviceId());
+        //entity.setDeviceid(requestBean.getDeviceId());
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setEmail(email);
         entity.setLanguage("E");
+        entity.setLastupdatedtime(new Timestamp(System.currentTimeMillis()));
 
         mobileUserRepo.save(entity);
 
