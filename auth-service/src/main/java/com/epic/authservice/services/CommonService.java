@@ -6,6 +6,8 @@ import com.epic.authservice.bean.UserAvailibilityRequestBean;
 import com.epic.authservice.persistance.entity.ShMobileUserEntity;
 import com.epic.authservice.persistance.repository.MobileUserRepo;
 import io.jsonwebtoken.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -46,6 +48,8 @@ public class CommonService {
 
     @Autowired
     protected RestTemplate restTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(CommonService.class);
 
     public boolean isAuthorisedAccess(String httpBacicAuthHeader, String deviceId){
         boolean isAuthorised = false;
@@ -137,12 +141,17 @@ public class CommonService {
     public boolean updateMobileUser(JwtRequestBean requestBean){
 
         String email = this.getEmailAddress(requestBean.getCustomerNic());
-
-        if(email == null) return false;
-
         ShMobileUserEntity entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
 
         //entity.setDeviceid(requestBean.getDeviceId());
+        if(entity.getIdnumber() != null && entity.getIdnumber().equals(requestBean.getCustomerNic()) && entity.getEmail() != null ) {
+            if(email == null){
+                email = entity.getEmail();
+            }
+        }
+
+        if(email == null) return false;
+
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setEmail(email);
@@ -171,10 +180,18 @@ public class CommonService {
         try {
             ResponseEntity<FinacleCustomerDetailsResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FinacleCustomerDetailsResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            log.info("Email inquiry response status : " + responseFromService.getBody().getSTATUS());
+            log.debug(responseFromService.getBody().toString());
             return responseFromService.getBody().getRESPONSE_DATA().get("Email").toString();
         } catch(HttpStatusCodeException e) {
+            log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
+            return null;
+        } catch(Exception e) {
+            log.error(e.getMessage());
+            response.put("STATUS","FAILED");
+            response.put("MESSAGE",e.getMessage());
             return null;
         }
     }

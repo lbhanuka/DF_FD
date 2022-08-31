@@ -164,10 +164,22 @@ public class AuthService {
 
     private void insertIntoMobileUser(UserAvailibilityRequestBean requestBean, long tokenExpTimeInMilis, String token){
 
-        ShMobileUserEntity entity = new ShMobileUserEntity();
+        ShMobileUserEntity entity;
 
-        entity.setDeviceid(requestBean.getDeviceId());
-        entity.setIdnumberApp(requestBean.getCustomerNic());
+        entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
+
+        if(entity != null) { //update existing device id
+            if (!requestBean.getCustomerNic().equals(entity.getIdnumberApp())){
+                entity.setIdnumberApp(requestBean.getCustomerNic());
+                entity.setIdnumber(null);
+                entity.setEmail(null);
+            }
+        } else { // create new device id
+            entity = new ShMobileUserEntity();
+            entity.setDeviceid(requestBean.getDeviceId());
+            entity.setIdnumberApp(requestBean.getCustomerNic());
+        }
+
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setLanguage(requestBean.getLanguage());
         entity.setToken(token);
