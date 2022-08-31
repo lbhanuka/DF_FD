@@ -139,9 +139,9 @@ public class CommonService {
 
         if(email == null) return false;
 
-        ShMobileUserEntity entity = new ShMobileUserEntity();
+        ShMobileUserEntity entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
 
-        entity.setDeviceid(requestBean.getDeviceId());
+        //entity.setDeviceid(requestBean.getDeviceId());
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setEmail(email);
