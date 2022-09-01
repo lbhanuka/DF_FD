@@ -19,6 +19,7 @@ import javax.validation.Validator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -163,14 +164,27 @@ public class AuthService {
 
     private void insertIntoMobileUser(UserAvailibilityRequestBean requestBean, long tokenExpTimeInMilis, String token){
 
-        ShMobileUserEntity entity = new ShMobileUserEntity();
+        ShMobileUserEntity entity;
 
-        entity.setDeviceid(requestBean.getDeviceId());
-        entity.setIdnumber(requestBean.getCustomerNic());
+        entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
+
+        if(entity != null) { //update existing device id
+            if (!requestBean.getCustomerNic().equals(entity.getIdnumberApp())){
+                entity.setIdnumberApp(requestBean.getCustomerNic());
+                entity.setIdnumber(null);
+                entity.setEmail(null);
+            }
+        } else { // create new device id
+            entity = new ShMobileUserEntity();
+            entity.setDeviceid(requestBean.getDeviceId());
+            entity.setIdnumberApp(requestBean.getCustomerNic());
+        }
+
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setLanguage(requestBean.getLanguage());
         entity.setToken(token);
         entity.setTokenexpiration(tokenExpTimeInMilis);
+        entity.setLastupdatedtime(new Timestamp(System.currentTimeMillis()));
 
         mobileUserRepo.save(entity);
     }

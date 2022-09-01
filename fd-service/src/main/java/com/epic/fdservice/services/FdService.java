@@ -7,6 +7,8 @@ import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.models.*;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
 import com.epic.fdservice.persistance.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
@@ -48,6 +50,8 @@ public class FdService {
 
     @Autowired
     Validator validator;
+
+    private static final Logger log = LoggerFactory.getLogger(FdService.class);
 
     public Map<String, Object> getFdDetails(FdDetailsRequestBean requestBean) {
         Map<String, Object> map = new HashMap<>();
@@ -288,7 +292,10 @@ public class FdService {
         try {
             ResponseEntity<PushNotificationResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, PushNotificationResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            log.info("Push notification response status : " + responseFromService.getBody().getSTATUS());
+            log.debug(responseFromService.getBody().toString());
         } catch(HttpStatusCodeException e) {
+            log.error(e.getMessage());
             e.printStackTrace();
         }
     }
@@ -326,13 +333,29 @@ public class FdService {
         try {
             ResponseEntity<FdCreatResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FdCreatResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
-            response.put("STATUS","SUCCESS");
-            response.put("ACCOUNTNO",responseFromService.getBody().getRESPONSE_DATA().get("TDACCOUT"));
-            response.put("MESSAGE","FD CREATION SUCCESS");
+            log.debug(responseFromService.getBody().toString());
+            response.put("STATUS", responseFromService.getBody().getSTATUS());
+            if (responseFromService.getBody().getSTATUS().equals("SUCCESS") && responseFromService.getBody().getRESPONSE_DATA().get("STATUS").equals("SUCCESS")) {
+                response.put("STATUS", "SUCCESS");
+                response.put("ACCOUNTNO", responseFromService.getBody().getRESPONSE_DATA().get("TDACCOUT"));
+                response.put("MESSAGE", "FD CREATION SUCCESS");
+            } else if (responseFromService.getBody().getSTATUS().equals("SUCCESS") && responseFromService.getBody().getRESPONSE_DATA().get("STATUS").equals("FAILED")){
+                response.put("STATUS", "FAILED");
+                response.put("MESSAGE", "FINACLE MSG: " + responseFromService.getBody().getRESPONSE_DATA().get("ERRMSG"));
+            } else {
+                response.put("STATUS","FAILED");
+                response.put("MESSAGE","FD CREATION FAILED");
+            }
             return response;
         } catch(HttpStatusCodeException e) {
+            log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
+            return response;
+        } catch(Exception e) {
+            log.error(e.getMessage());
+            response.put("STATUS","FAILED");
+            response.put("MESSAGE",e.getMessage());
             return response;
         }
     }
