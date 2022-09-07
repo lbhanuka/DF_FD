@@ -98,11 +98,16 @@ public class AuthController {
 
             if (commonService.isAuthorisedAccess(authString, requestBean.getDeviceId())){
                 boolean success = commonService.updateMobileUser(requestBean);
-                token = commonService.getJWT(authString, requestBean.getDeviceId());
-                Token tokenBean = new Token();
-                tokenBean.setToken(token);
-                responseBean.setResponse(MessageVarList.RSP_SUCCESS);
-                responseBean.setContent(tokenBean);
+                if(success){
+                    token = commonService.getJWT(authString, requestBean.getDeviceId());
+                    Token tokenBean = new Token();
+                    tokenBean.setToken(token);
+                    responseBean.setResponse(MessageVarList.RSP_SUCCESS);
+                    responseBean.setContent(tokenBean);
+                } else {
+                    responseBean.setResponse(MessageVarList.RSP_FAIL);
+                    responseBean.setContent(null);
+                }
 
             }else {
                 responseBean.setResponse(MessageVarList.RSP_NOT_AUTHORISED);

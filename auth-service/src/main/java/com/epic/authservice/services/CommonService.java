@@ -145,12 +145,17 @@ public class CommonService {
 
         //entity.setDeviceid(requestBean.getDeviceId());
         if(entity.getIdnumber() != null && entity.getIdnumber().equals(requestBean.getCustomerNic()) && entity.getEmail() != null ) {
+            log.info("Current email address is available to use");
             if(email == null){
+                log.debug("Setting customer email address as : " + entity.getEmail());
                 email = entity.getEmail();
             }
         }
 
-        if(email == null) return false;
+        if(email == null) {
+            log.error("Cannot resolve email address for NIC " + requestBean.getCustomerNic());
+            //return false; - no need to stop the process if there is no email address
+        }
 
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
