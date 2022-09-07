@@ -162,6 +162,14 @@ public class AuthService {
         return map;
     }
 
+    String getTotalFDBalanceFromFinacle( String nic){
+        String totalBalance = "0.00";
+
+
+
+        return totalBalance;
+    }
+
     private void insertIntoMobileUser(UserAvailibilityRequestBean requestBean, long tokenExpTimeInMilis, String token){
 
         ShMobileUserEntity entity;
