@@ -140,7 +140,14 @@ public class CommonService {
 
     public boolean updateMobileUser(JwtRequestBean requestBean){
 
-        String email = this.getEmailAddress(requestBean.getCustomerNic());
+        Map<String, Object> customerDetails = this.getCustomerDetails(requestBean.getCustomerNic());
+        String email = null, name = null;
+        if(customerDetails.get("email") != null){
+            email = customerDetails.get("email").toString();
+        }
+        if(customerDetails.get("name") != null){
+            name = customerDetails.get("name").toString();
+        }
         ShMobileUserEntity entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
 
         //entity.setDeviceid(requestBean.getDeviceId());
@@ -160,6 +167,7 @@ public class CommonService {
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setEmail(email);
+        entity.setName(name);
         entity.setLanguage("E");
         entity.setLastupdatedtime(new Timestamp(System.currentTimeMillis()));
 
@@ -168,7 +176,7 @@ public class CommonService {
         return true;
     }
 
-    private String getEmailAddress(String nic){
+    private Map<String, Object> getCustomerDetails(String nic){
         Map<String, Object> response = new HashMap<>();
         HashMap<String,String> requestData = new HashMap<>();
 
@@ -187,17 +195,20 @@ public class CommonService {
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
             log.info("Email inquiry response status : " + responseFromService.getBody().getSTATUS());
             log.debug(responseFromService.getBody().toString());
-            return responseFromService.getBody().getRESPONSE_DATA().get("Email").toString();
+            response.put("STATUS","SUCCESS");
+            response.put("email",responseFromService.getBody().getRESPONSE_DATA().get("Email").toString());
+            response.put("name",responseFromService.getBody().getRESPONSE_DATA().get("Salutation").toString() + " " +responseFromService.getBody().getRESPONSE_DATA().get("CusName").toString());
+            return response;
         } catch(HttpStatusCodeException e) {
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
-            return null;
+            return response;
         } catch(Exception e) {
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getMessage());
-            return null;
+            return response;
         }
     }
 }

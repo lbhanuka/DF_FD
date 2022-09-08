@@ -40,7 +40,9 @@ public class ShMobileUserEntity {
     @Basic
     @Column(name = "LASTUPDATEDTIME",insertable = false)
     private Timestamp lastupdatedtime;
-
+    @Basic
+    @Column(name = "NAME")
+    private String name;
 
     public String getDeviceid() {
         return deviceid;
@@ -128,6 +130,14 @@ public class ShMobileUserEntity {
 
     public void setLastupdatedtime(Timestamp lastupdatedtime) {
         this.lastupdatedtime = lastupdatedtime;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

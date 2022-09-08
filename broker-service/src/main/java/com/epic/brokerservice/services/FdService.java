@@ -193,6 +193,7 @@ public class FdService {
         requestData.put("depPerdInMths",inputs.get("depPerdInMths"));
         requestData.put("depPerdInDays",inputs.get("depPerdInDays"));
         requestData.put("autoRenewalFlg",inputs.get("autoRenewalFlg"));
+        requestData.put("autoRenewalMethod",inputs.get("autoRenewalMethod"));
         requestData.put("autoRenewPerdMths",inputs.get("autoRenewPerdMths"));
         requestData.put("autoRenewPerdDays",inputs.get("autoRenewPerdDays"));
         requestData.put("operativeAcid",inputs.get("operativeAcid"));

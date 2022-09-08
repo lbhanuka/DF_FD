@@ -13,17 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -47,6 +44,9 @@ public class FdService {
 
     @Autowired
     FdProductsRepo fdProductsRepo;
+
+    @Autowired
+    MobileUserRepo mobileUserRepo;
 
     @Autowired
     Validator validator;
@@ -132,7 +132,7 @@ public class FdService {
                 response.put("STATUS","BAD REQUEST");
                 return response;
             }
-        } else if (request.getInqType().equals("NIC")) {
+        } else if (request.getInqType().equals("NIC") || request.getInqType().equals("CIF")) {
             requestData.put("inqType",request.getInqType());
             requestData.put("inqValue",request.getInqValue());
         } else {
@@ -266,6 +266,8 @@ public class FdService {
                 pushNotificationRequestBean.setMobileNumber(mobileUserBean.getMobileNumber());
                 pushNotificationRequestBean.setMessageType("FD_CREATE");
                 this.sendPushNotification(pushNotificationRequestBean);
+                this.sendSms(mobileUserBean.getMobileNumber(),finacleResponse.get("ACCOUNTNO"));
+                this.sendEmail(request,finacleResponse.get("ACCOUNTNO"),mobileUserBean.getNic());
 
             }
             entity.setFdaccountnumber(finacleResponse.get("ACCOUNTNO"));
@@ -281,7 +283,114 @@ public class FdService {
         return response;
     }
 
-    private void sendPushNotification(PushNotificationRequestBean requestBean) {
+    @Async
+    public void sendSms(String mobileNumber, String accountNumber) {
+        String url = "http://COMMON-SERVICE/common/send/sms";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HashMap<String,String> request = new HashMap<>();
+        request.put("mobileNumber",this.prepareMobileNumberForSMS(mobileNumber));
+        String message = "Congratulations! Your Fixed Deposit is successfully opened. Your Account No is " + accountNumber +
+                ". Take control of your account and enjoy many other benefits via the Genie App";
+        request.put("message",message);
+        log.info("FD Creation SMS content : " + message);
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<PushNotificationResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, PushNotificationResponseBean.class);
+            //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            log.info("SMS notification response status : " + responseFromService.getBody().getSTATUS());
+            log.debug(responseFromService.getBody().toString());
+        } catch(HttpStatusCodeException e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String prepareMobileNumberForSMS(String mobileNumber) {
+        String result = "tel:+94";
+        if(mobileNumber != null && mobileNumber.length() > 8){
+            result = result + mobileNumber.substring(mobileNumber.length() - 9);
+            log.info("Mobile number for SMS notification: " + result);
+        } else {
+            log.info("Invalid mobile number received for SMS notification as: " + mobileNumber);
+        }
+        return result;
+    }
+
+    @Async
+    public void sendEmail(FdCreateRequestBean request, String accountNo, String nic) {
+
+        FdDetailsFinacleRequestBean finacleRequestBean = new FdDetailsFinacleRequestBean();
+        EmailRequestBean emailRequestBean = new EmailRequestBean();
+
+        finacleRequestBean.setInqValue(request.getMainCif());
+        finacleRequestBean.setInqType("CIF");
+        Map<String, Object> fdListResponse = callToBrokerService(finacleRequestBean);
+        LinkedHashMap objectList = (LinkedHashMap) fdListResponse.get("DATA");
+        log.info("Finacle response status for FD List :" + objectList.toString());
+        ArrayList accountList = (ArrayList) objectList.get("AccountList");
+
+        LinkedHashMap<String,String> fd = new LinkedHashMap<>();
+
+        for (Object fd1 : accountList){
+            LinkedHashMap account = (LinkedHashMap) fd1;
+            if(account.get("AccountNo").equals(accountNo)){
+                fd = account;
+                break;
+            }
+        }
+
+        HashMap<String,String> parameters = new HashMap<>();
+
+        parameters.put("customerName", fd.get("AccountName"));
+        parameters.put("customerNic",nic);
+        parameters.put("fdAccountNumber",fd.get("AccountNo"));
+        parameters.put("depositAmount",new BigDecimal(fd.get("CurrDepositAmt")).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+        parameters.put("depositPeriod",fd.get("DepositPeriodMnths"));
+        parameters.put("interestRate",new BigDecimal(fd.get("IntRate")).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+        parameters.put("monthlyMaturity",fd.get("Intpayfreq"));
+        parameters.put("openDate",fd.get("AcctOpnDate"));
+        parameters.put("maturityDate",fd.get("MaturityDate"));
+        parameters.put("maturityAmount",new BigDecimal(fd.get("MaturityAmt")).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+        emailRequestBean.setEmailType("FD_CREATION_SUCCESS_CUSTOMER");
+        emailRequestBean.setEmailTo(mobileUserRepo.findEmailByDeviceid(request.getDeviceId()));
+        emailRequestBean.setParameters(parameters);
+        log.info("Sending FD Creation Email request to common-service for email address: " + emailRequestBean.getEmailTo());
+        this.callToCommonService(emailRequestBean);
+
+    }
+
+    private Map<String, Object> callToCommonService(EmailRequestBean request){
+
+        Map<String, Object> response = new HashMap<>();
+
+        String url = "http://COMMON-SERVICE/common/send/email";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+
+        HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
+            response.put("STATUS","SUCCESS");
+            log.info("Common-service call status: SUCCESS");
+            return response;
+        } catch(HttpStatusCodeException e) {
+            log.info("Common-service call status: FAILED");
+            response.put("STATUS","FAILED");
+            response.put("MESSAGE",e.getResponseBodyAsString());
+            return response;
+        }
+    }
+
+    @Async
+    public void sendPushNotification(PushNotificationRequestBean requestBean) {
         String url = "http://COMMON-SERVICE/common/send/inapp";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -314,6 +423,7 @@ public class FdService {
         if(request.getRenewInstructions().equals("1")){
             requestData.put("autoRenewalFlg","Y");
             requestData.put("autoRenewPerdMths",request.getDepPerdInMths());
+            requestData.put("autoRenewalMethod","P");
         } else {
             requestData.put("autoRenewalFlg","N");
             requestData.put("autoRenewPerdMths","0");
