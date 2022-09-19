@@ -141,21 +141,43 @@ public class CommonService {
     public boolean updateMobileUser(JwtRequestBean requestBean){
 
         Map<String, Object> customerDetails = this.getCustomerDetails(requestBean.getCustomerNic());
-        String email = null, name = null;
-        if(customerDetails.get("email") != null){
-            email = customerDetails.get("email").toString();
-        }
-        if(customerDetails.get("name") != null){
-            name = customerDetails.get("name").toString();
-        }
+        String email = null, name = null, dateOfBirth = null, address1 = null, address2 = null, address3 = null;
+
+        email = customerDetails.get("email") != null ? customerDetails.get("email").toString() : null;
+        name = customerDetails.get("name") != null ? customerDetails.get("name").toString() : null;
+        dateOfBirth = customerDetails.get("DOB") != null ? customerDetails.get("DOB").toString() : null;
+        address1 = customerDetails.get("address1") != null ? customerDetails.get("address1").toString() : null;
+        address2 = customerDetails.get("address2") != null ? customerDetails.get("address2").toString() : null;
+        address3 = customerDetails.get("address3") != null ? customerDetails.get("address3").toString() : null;
+
         ShMobileUserEntity entity = mobileUserRepo.findByDeviceid(requestBean.getDeviceId());
 
         //entity.setDeviceid(requestBean.getDeviceId());
-        if(entity.getIdnumber() != null && entity.getIdnumber().equals(requestBean.getCustomerNic()) && entity.getEmail() != null ) {
-            log.info("Current email address is available to use");
-            if(email == null){
+        if(entity.getIdnumber() != null && entity.getIdnumber().equals(requestBean.getCustomerNic())) { //device ID has got the same customer.
+            log.info("Current customer data is available to use");
+            if(entity.getEmail() != null && email == null){
                 log.debug("Setting customer email address as : " + entity.getEmail());
                 email = entity.getEmail();
+            }
+            if(entity.getDateOfBirth() != null && dateOfBirth == null){
+                log.debug("Setting customer DOB as : " + entity.getDateOfBirth());
+                dateOfBirth = entity.getDateOfBirth();
+            }
+            if(entity.getName() != null && name == null){
+                log.debug("Setting customer name as : " + entity.getName());
+                name = entity.getName();
+            }
+            if(entity.getAddress1() != null && address1 == null){
+                log.debug("Setting address1 as : " + entity.getAddress1());
+                address1 = entity.getAddress1();
+            }
+            if(entity.getAddress2() != null && address2 == null){
+                log.debug("Setting address2 as : " + entity.getAddress2());
+                address2 = entity.getAddress2();
+            }
+            if(entity.getAddress3() != null && address2 == null){
+                log.debug("Setting address3 as : " + entity.getAddress3());
+                address3 = entity.getAddress3();
             }
         }
 
@@ -163,11 +185,21 @@ public class CommonService {
             log.error("Cannot resolve email address for NIC " + requestBean.getCustomerNic());
             //return false; - no need to stop the process if there is no email address
         }
+        if(name == null) {
+            log.error("Cannot resolve customer name for NIC " + requestBean.getCustomerNic());
+        }
+        if(dateOfBirth == null) {
+            log.error("Cannot resolve DOB for NIC " + requestBean.getCustomerNic());
+        }
 
         entity.setIdnumber(requestBean.getCustomerNic());
         entity.setMobilenumber(requestBean.getMobileNumber());
         entity.setEmail(email);
         entity.setName(name);
+        entity.setDateOfBirth(dateOfBirth);
+        entity.setAddress1(address1);
+        entity.setAddress2(address2);
+        entity.setAddress3(address3);
         entity.setLanguage("E");
         entity.setLastupdatedtime(new Timestamp(System.currentTimeMillis()));
 
@@ -198,6 +230,10 @@ public class CommonService {
             response.put("STATUS","SUCCESS");
             response.put("email",responseFromService.getBody().getRESPONSE_DATA().get("Email").toString());
             response.put("name",responseFromService.getBody().getRESPONSE_DATA().get("Salutation").toString() + " " +responseFromService.getBody().getRESPONSE_DATA().get("CusName").toString());
+            response.put("DOB",responseFromService.getBody().getRESPONSE_DATA().get("DOB").toString());
+            response.put("address1",responseFromService.getBody().getRESPONSE_DATA().get("Address1").toString());
+            response.put("address2",responseFromService.getBody().getRESPONSE_DATA().get("Address2").toString());
+            response.put("address3",responseFromService.getBody().getRESPONSE_DATA().get("Address3").toString());
             return response;
         } catch(HttpStatusCodeException e) {
             log.error(e.getMessage());

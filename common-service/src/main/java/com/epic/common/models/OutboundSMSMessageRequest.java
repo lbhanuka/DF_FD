@@ -8,6 +8,7 @@ public class OutboundSMSMessageRequest {
     String senderAddress;
     HashMap<String,String> outboundSMSTextMessage;
     HashMap<String,String> receiptRequest;
+    String senderName;
 
     public String[] getAddress() {
         return address;
@@ -39,5 +40,13 @@ public class OutboundSMSMessageRequest {
 
     public void setReceiptRequest(HashMap<String, String> receiptRequest) {
         this.receiptRequest = receiptRequest;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
     }
 }

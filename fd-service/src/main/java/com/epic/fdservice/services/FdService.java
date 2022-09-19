@@ -6,6 +6,8 @@ import com.epic.fdservice.models.FdInstructionsResponseBean;
 import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.models.*;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
+import com.epic.fdservice.persistance.entity.FdProductsEntity;
+import com.epic.fdservice.persistance.entity.ShMobileUserEntity;
 import com.epic.fdservice.persistance.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +23,12 @@ import org.springframework.web.client.RestTemplate;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static org.apache.commons.lang.WordUtils.capitalize;
 
 @Service
 public class FdService {
@@ -49,7 +56,14 @@ public class FdService {
     MobileUserRepo mobileUserRepo;
 
     @Autowired
+    CommonParamRepo commonParamRepo;
+
+    @Autowired
     Validator validator;
+
+    final String FINACLE_DOB_FORMAT = "dd-MMM-yyyy";
+    final String PDF_PASSWORD_DOB_FORMAT = "ddMMyyyy";
+
 
     private static final Logger log = LoggerFactory.getLogger(FdService.class);
 
@@ -240,51 +254,84 @@ public class FdService {
     }
 
     public ResponseEntity<?> createFdAccount(FdCreateRequestBean request) {
-
         FdDetailsEntity entity = new FdDetailsEntity();
+        ResponseEntity<?> response = null;
+        ShMobileUserEntity mobileUserEntity = new ShMobileUserEntity();
+        PushNotificationRequestBean pushNotificationRequestBean = new PushNotificationRequestBean();
+        try {
+            mobileUserEntity = mobileUserRepo.findByDeviceid(request.getDeviceId());
+            entity.setAmount(new BigDecimal(request.getDepAmnt()));
+            entity.setCif(request.getMainCif());
+            entity.setInterestcreditaccount(request.getRepaymentAcid());
+            entity.setMaturitycreditaccount(request.getRepaymentAcid());
+            entity.setRate(request.getIntrestRate());
+            entity.setProductcode(request.getSchmCode());
+            entity.setSchemecode(request.getSchmCode());
+            entity.setRenewalinstruction(request.getRenewInstructions());
+            entity.setTenure(Integer.parseInt(request.getDepPerdInMths()));
+            entity.setTermversion(request.getTCVersion());
+            entity.setStatus("FDFAIL");
 
-        entity.setAmount(new BigDecimal(request.getDepAmnt()));
-        entity.setCif(request.getMainCif());
-        entity.setInterestcreditaccount(request.getRepaymentAcid());
-        entity.setMaturitycreditaccount(request.getRepaymentAcid());
-        entity.setRate(request.getIntrestRate());
-        entity.setProductcode(request.getSchmCode());
-        entity.setSchemecode(request.getSchmCode());
-        entity.setRenewalinstruction(request.getRenewInstructions());
-        entity.setTenure(Integer.parseInt(request.getDepPerdInMths()));
-        entity.setTermversion(request.getTCVersion());
-
-        HashMap<String,String> finacleResponse = callToBrokerService(request);
-
-        if(finacleResponse.get("STATUS").equals("SUCCESS")){
-            if(request.getDeviceId() != null && !request.getDeviceId().isEmpty()){
-                MobileUserBean mobileUserBean = fdDetailsRepo.getNicByDeviceId(request.getDeviceId());
-                entity.setNic(mobileUserBean.getNic());
-
-                //send push notification
-                PushNotificationRequestBean pushNotificationRequestBean = new PushNotificationRequestBean();
-                pushNotificationRequestBean.setMobileNumber(mobileUserBean.getMobileNumber());
-                pushNotificationRequestBean.setMessageType("FD_CREATE");
-                this.sendPushNotification(pushNotificationRequestBean);
-                this.sendSms(mobileUserBean.getMobileNumber(),finacleResponse.get("ACCOUNTNO"));
-                this.sendEmail(request,finacleResponse.get("ACCOUNTNO"),mobileUserBean.getNic());
-
-            }
-            entity.setFdaccountnumber(finacleResponse.get("ACCOUNTNO"));
+            entity.setNic(mobileUserEntity.getIdnumber());
             String maxId = fdDetailsRepo.getMaxId();
             Integer nextId = Integer.parseInt(maxId) + 1;
             entity.setRequestid(nextId.toString());
             fdDetailsRepo.save(entity);
-        } else {
 
+            HashMap<String,String> finacleResponse = callToBrokerService(request);
+
+            if(finacleResponse.get("STATUS").equals("SUCCESS")){
+                //send push notification
+                entity.setFdaccountnumber(finacleResponse.get("ACCOUNTNO"));
+                entity.setStatus("FDSUCCESS");
+                fdDetailsRepo.save(entity);
+
+                pushNotificationRequestBean.setMobileNumber(mobileUserEntity.getMobilenumber());
+                pushNotificationRequestBean.setMessageType("FD_CREATE");
+
+                this.perfomePostFDFunctions(request,pushNotificationRequestBean,mobileUserEntity,finacleResponse.get("ACCOUNTNO"),entity);
+
+            } else {
+                HashMap<String,String> messageParams = new HashMap<>();
+                String retryCount = commonParamRepo.getValueByID("FD_RESEND_TIMEOUT_IN_MINUTES");
+                messageParams.put("count",retryCount);
+                pushNotificationRequestBean.setMobileNumber(mobileUserEntity.getMobilenumber());
+                pushNotificationRequestBean.setMessageParams(messageParams);
+                pushNotificationRequestBean.setMessageType("FD_CREATE_FAIL");
+                this.sendPushNotification(pushNotificationRequestBean);
+                this.sendSms(mobileUserEntity.getMobilenumber(),prepareFDFailSms(retryCount));
+                this.sendFailureEmail(request,mobileUserEntity);
+            }
+            response = new ResponseEntity<>(finacleResponse,HttpStatus.OK);
+
+        } catch (Exception ex){
+            log.info("Error while processing FD creation request for CIF: " + request.getMainCif());
+            this.sendFailureEmail(request,mobileUserEntity);
+            log.info("Failure email sent to DF Support Team for CIF: " + request.getMainCif());
+            HashMap<String,String> responseBody = new HashMap<>();
+            responseBody.put("STATUS","FAILED");
+            responseBody.put("MESSAGE","FD CREATION FAILED");
+            response = new ResponseEntity<>(responseBody,HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        ResponseEntity<?> response = new ResponseEntity<>(finacleResponse,HttpStatus.OK);
 
         return response;
     }
 
+    private String prepareFDSuccessSms(String accountNumber){
+        String smsBody = "Congratulations! Your Fixed Deposit is successfully opened. Your Account No is " + accountNumber +
+                ". Take control of your account and enjoy many other benefits via the Genie App";
+        log.info("FD Creation SMS content : " + smsBody);
+        return smsBody;
+    }
+
+    private String prepareFDFailSms( String retryCount){
+        String smsBody = "Dear Customer, your request for FD account creation failed due to a technical issue. Please try again after " + retryCount + " minutes. Thank you.";
+        log.info("FD Fail SMS content : " + smsBody);
+        return smsBody;
+    }
+
     @Async
-    public void sendSms(String mobileNumber, String accountNumber) {
+    public void sendSms(String mobileNumber, String message) {
         String url = "http://COMMON-SERVICE/common/send/sms";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -292,10 +339,7 @@ public class FdService {
 
         HashMap<String,String> request = new HashMap<>();
         request.put("mobileNumber",this.prepareMobileNumberForSMS(mobileNumber));
-        String message = "Congratulations! Your Fixed Deposit is successfully opened. Your Account No is " + accountNumber +
-                ". Take control of your account and enjoy many other benefits via the Genie App";
         request.put("message",message);
-        log.info("FD Creation SMS content : " + message);
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
@@ -322,32 +366,15 @@ public class FdService {
     }
 
     @Async
-    public void sendEmail(FdCreateRequestBean request, String accountNo, String nic) {
+    public void sendEmail(FdCreateRequestBean request, String accountNo, ShMobileUserEntity mobileUserEntity, LinkedHashMap<String,String> fd) throws ParseException {
 
-        FdDetailsFinacleRequestBean finacleRequestBean = new FdDetailsFinacleRequestBean();
         EmailRequestBean emailRequestBean = new EmailRequestBean();
-
-        finacleRequestBean.setInqValue(request.getMainCif());
-        finacleRequestBean.setInqType("CIF");
-        Map<String, Object> fdListResponse = callToBrokerService(finacleRequestBean);
-        LinkedHashMap objectList = (LinkedHashMap) fdListResponse.get("DATA");
-        log.info("Finacle response status for FD List :" + objectList.toString());
-        ArrayList accountList = (ArrayList) objectList.get("AccountList");
-
-        LinkedHashMap<String,String> fd = new LinkedHashMap<>();
-
-        for (Object fd1 : accountList){
-            LinkedHashMap account = (LinkedHashMap) fd1;
-            if(account.get("AccountNo").equals(accountNo)){
-                fd = account;
-                break;
-            }
-        }
 
         HashMap<String,String> parameters = new HashMap<>();
 
-        parameters.put("customerName", fd.get("AccountName"));
-        parameters.put("customerNic",nic);
+        parameters.put("customerName", mobileUserEntity.getName());
+        parameters.put("customerNic",mobileUserEntity.getIdnumber());
+        parameters.put("customerAddress",prepareAddress(mobileUserEntity));
         parameters.put("fdAccountNumber",fd.get("AccountNo"));
         parameters.put("depositAmount",new BigDecimal(fd.get("CurrDepositAmt")).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
         parameters.put("depositPeriod",fd.get("DepositPeriodMnths"));
@@ -357,10 +384,60 @@ public class FdService {
         parameters.put("maturityDate",fd.get("MaturityDate"));
         parameters.put("maturityAmount",new BigDecimal(fd.get("MaturityAmt")).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
 
+        String newDateString;
+
+        SimpleDateFormat sdf = new SimpleDateFormat(FINACLE_DOB_FORMAT);
+        Date d = sdf.parse(mobileUserEntity.getDateOfBirth());
+        sdf.applyPattern(PDF_PASSWORD_DOB_FORMAT);
+        newDateString = sdf.format(d);
+
+        parameters.put("dateOfBirth",newDateString);
         emailRequestBean.setEmailType("FD_CREATION_SUCCESS_CUSTOMER");
         emailRequestBean.setEmailTo(mobileUserRepo.findEmailByDeviceid(request.getDeviceId()));
         emailRequestBean.setParameters(parameters);
         log.info("Sending FD Creation Email request to common-service for email address: " + emailRequestBean.getEmailTo());
+        this.callToCommonService(emailRequestBean);
+
+    }
+
+    private String prepareAddress(ShMobileUserEntity mobileUserEntity) {
+        String address1 = mobileUserEntity.getAddress1() != null ? mobileUserEntity.getAddress1()+", " : "";
+        String address2 = mobileUserEntity.getAddress2() != null ? mobileUserEntity.getAddress2()+", " : "";
+        String address3 = mobileUserEntity.getAddress3() != null ? mobileUserEntity.getAddress3()+"." : "";
+
+        String address = address1 + address2 + address3;
+
+        return capitalize(address);
+    }
+
+    @Async
+    public void sendFailureEmail(FdCreateRequestBean request,ShMobileUserEntity mobileUserEntity) {
+
+        EmailRequestBean emailRequestBean = new EmailRequestBean();
+        HashMap<String,String> parameters = new HashMap<>();
+        FdProductsEntity productEntity = fdProductsRepo.findByProductCode(request.getSchmCode());
+
+        parameters.put("customerNic",mobileUserEntity.getIdnumber());
+        parameters.put("CIF",request.getMainCif());
+        parameters.put("savingsAccount",request.getRepaymentAcid());
+        if(productEntity.getProductType().equals("NSENIOR")){
+            parameters.put("productType","NON-SENIOR");
+        }else {
+            parameters.put("productType","SENIOR");
+        }
+        parameters.put("schemeCode",request.getSchmCode());
+        parameters.put("mobileNumber",mobileUserEntity.getMobilenumber());
+        parameters.put("customerName",mobileUserEntity.getName());
+        parameters.put("depositAmount",new BigDecimal(request.getDepAmnt()).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+        parameters.put("interestRate",new BigDecimal(request.getIntrestRate()).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+        parameters.put("depositPeriod",request.getDepPerdInMths());
+        parameters.put("interestPayableMode",productEntity.getInterestType());
+        parameters.put("monthlyOrMaturityInterest","--");
+
+        emailRequestBean.setEmailType("FD_CREATION_FAILURE_IT");
+        emailRequestBean.setEmailTo(commonParamRepo.getValueByID("CM_IT_EMAIL"));
+        emailRequestBean.setParameters(parameters);
+        log.info("Sending FD Failure Email request to common-service for CIF: " + request.getMainCif());
         this.callToCommonService(emailRequestBean);
 
     }
@@ -387,6 +464,42 @@ public class FdService {
             response.put("MESSAGE",e.getResponseBodyAsString());
             return response;
         }
+    }
+
+    @Async
+    public void perfomePostFDFunctions(FdCreateRequestBean request, PushNotificationRequestBean pushNotificationRequestBean, ShMobileUserEntity mobileUserEntity, String accountno, FdDetailsEntity entity) throws ParseException {
+
+        FdDetailsFinacleRequestBean finacleRequestBean = new FdDetailsFinacleRequestBean();
+
+        finacleRequestBean.setInqValue(request.getMainCif());
+        finacleRequestBean.setInqType("CIF");
+        Map<String, Object> fdListResponse = callToBrokerService(finacleRequestBean);
+        LinkedHashMap objectList = (LinkedHashMap) fdListResponse.get("DATA");
+        log.info("Finacle response status for FD List :" + objectList.toString());
+        ArrayList accountList = (ArrayList) objectList.get("AccountList");
+
+        LinkedHashMap<String,String> fd = new LinkedHashMap<>();
+
+        for (Object fd1 : accountList){
+            LinkedHashMap account = (LinkedHashMap) fd1;
+            if(account.get("AccountNo").equals(accountno)){
+                fd = account;
+                break;
+            }
+        }
+
+        this.sendPushNotification(pushNotificationRequestBean);
+        this.sendSms(mobileUserEntity.getMobilenumber(),prepareFDSuccessSms(accountno));
+        this.sendEmail(request,accountno,mobileUserEntity,fd);
+
+        entity.setMaturityvalue(new BigDecimal(fd.get("MaturityAmt")));
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy");
+        Date parsedDate = dateFormat.parse(fd.get("MaturityDate"));
+        Timestamp timestamp = new java.sql.Timestamp(parsedDate.getTime());
+        entity.setMaturitydate(timestamp);
+
+        fdDetailsRepo.save(entity);
     }
 
     @Async
@@ -420,11 +533,15 @@ public class FdService {
         requestData.put("depAmnt",request.getDepAmnt());
         requestData.put("depPerdInMths",request.getDepPerdInMths());
         requestData.put("depPerdInDays","0");
-        if(request.getRenewInstructions().equals("1")){
+        if(request.getRenewInstructions().equals("1")){ //1 - Renew capital only
             requestData.put("autoRenewalFlg","Y");
             requestData.put("autoRenewPerdMths",request.getDepPerdInMths());
             requestData.put("autoRenewalMethod","P");
-        } else {
+        }else if(request.getRenewInstructions().equals("3")){ // 3 - Renew capital with interest
+            requestData.put("autoRenewalFlg","Y");
+            requestData.put("autoRenewPerdMths",request.getDepPerdInMths());
+            requestData.put("autoRenewalMethod","M");
+        }else { // 2 - Do not renew
             requestData.put("autoRenewalFlg","N");
             requestData.put("autoRenewPerdMths","0");
         }

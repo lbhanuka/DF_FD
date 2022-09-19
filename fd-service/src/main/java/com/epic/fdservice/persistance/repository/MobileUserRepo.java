@@ -13,4 +13,6 @@ public interface MobileUserRepo extends JpaRepository<ShMobileUserEntity,String>
     @Query("select m.email from ShMobileUserEntity m where m.deviceid = ?1")
     String findEmailByDeviceid(String deviceId);
 
+    ShMobileUserEntity findByDeviceid(String deviceId);
+
 }

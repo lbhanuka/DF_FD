@@ -51,6 +51,15 @@ public class FdDetailsEntity {
     @Basic
     @Column(name = "TERMVERSION")
     private String termversion;
+    @Basic
+    @Column(name = "STATUS")
+    private String status;
+    @Basic
+    @Column(name = "MATURITYDATE")
+    private Timestamp maturitydate;
+    @Basic
+    @Column(name = "MATURITYVALUE")
+    private BigDecimal maturityvalue;
 
     public String getRequestid() {
         return requestid;
@@ -162,6 +171,30 @@ public class FdDetailsEntity {
 
     public void setTermversion(String termversion) {
         this.termversion = termversion;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Timestamp getMaturitydate() {
+        return maturitydate;
+    }
+
+    public void setMaturitydate(Timestamp maturitydate) {
+        this.maturitydate = maturitydate;
+    }
+
+    public BigDecimal getMaturityvalue() {
+        return maturityvalue;
+    }
+
+    public void setMaturityvalue(BigDecimal maturityvalue) {
+        this.maturityvalue = maturityvalue;
     }
 
     @Override

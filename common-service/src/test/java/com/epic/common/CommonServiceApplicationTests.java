@@ -1,6 +1,7 @@
 package com.epic.common;
 
 import com.epic.common.services.EmailService;
+import com.epic.common.util.NumberWordConverter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +39,23 @@ class CommonServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
+	}
+
+	@Test
+	void numberToWord(){
+		//String a = "132.23";
+		double b = 123.23;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
+		b = 1;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
+		b = 123.00;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
+		b = 1132132232.23;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
+		b = 123;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
+		b = 1233243244;
+		System.out.println("OWN word------------------>" + NumberWordConverter.getMoneyIntoWords(b));
 	}
 
 }
