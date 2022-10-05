@@ -18,9 +18,9 @@ class CommonServiceApplicationTests {
 	EmailService emailService;
 
 	@Test
-	void sendEmailTest() {
+	void sendEmailTest() throws MessagingException {
 
-		String to = "bhanuka_t@epiclanka.net";
+		String[] to = {"bhanuka_t@epiclanka.net"};
 		String subject = "DF EMAIL TEST";
 		String text = "THIS IS A TEST";
 
@@ -30,7 +30,7 @@ class CommonServiceApplicationTests {
 	@Test
 	void sendEmailWithAttachmentTest() throws MessagingException, IOException, URISyntaxException {
 
-		String to = "bhanuka_t@epiclanka.net";
+		String[] to = {"bhanuka_t@epiclanka.net"};
 		String subject = "DF EMAIL TEST";
 		String text = "THIS IS A TEST";
 

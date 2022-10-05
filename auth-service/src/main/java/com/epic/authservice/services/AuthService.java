@@ -2,6 +2,7 @@ package com.epic.authservice.services;
 
 import com.epic.authservice.bean.AccessTokenRequestBean;
 import com.epic.authservice.bean.UserAvailibilityRequestBean;
+import com.epic.authservice.controllers.AuthController;
 import com.epic.authservice.persistance.entity.ShClientEntity;
 import com.epic.authservice.persistance.entity.ShClientTokenEntity;
 import com.epic.authservice.persistance.entity.ShMobileUserEntity;
@@ -10,6 +11,8 @@ import com.epic.authservice.persistance.repository.ClientTokenRepo;
 import com.epic.authservice.persistance.repository.FdDetailsRepo;
 import com.epic.authservice.persistance.repository.MobileUserRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,8 @@ import java.util.*;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     @Value("${config.synthima}")
     private String synthima;
@@ -63,13 +68,14 @@ public class AuthService {
         Map<String, Object> map = new HashMap<>();
 
         if(requestBean.getGrant_type() == null || !requestBean.getGrant_type().equals("password")){
+            log.warn("Eligibility api call - Unsupported grant type");
             map.put("error","unsupported_grant_type");
             map.put("error_description","Unsupported grant type: " + requestBean.getGrant_type());
             return map;
         }
 
         if (this.validateClient(requestBean)){
-
+            log.info("Eligibility api call - request OK");
             ShClientEntity entity = clientRepo.getReferenceById(requestBean.getClient_id());
 
             Calendar date = Calendar.getInstance();
@@ -85,6 +91,7 @@ public class AuthService {
             insertIntoClientToken(requestBean, map, t);
 
         } else {
+            log.warn("Eligibility api call - request FAILED");
             map.put("error","invalid_grant");
             map.put("error_description","Bad client credentials");
         }
@@ -97,7 +104,7 @@ public class AuthService {
     }
 
     private void insertIntoClientToken(AccessTokenRequestBean requestBean, Map<String, Object> map, long tokenExpTimeInMilis){
-
+        log.info("Eligibility api call - inserting data to client token STARTED");
         ShClientTokenEntity entity = new ShClientTokenEntity();
 
         entity.setClientid(requestBean.getClient_id());
@@ -106,6 +113,7 @@ public class AuthService {
         entity.setExpiration(tokenExpTimeInMilis);
 
         clientTokenRepo.save(entity);
+        log.info("Eligibility api call - inserting data to client token FINISHED");
     }
 
     public Map<String, Object> checkUserAvailibility(UserAvailibilityRequestBean requestBean, String serviceType){

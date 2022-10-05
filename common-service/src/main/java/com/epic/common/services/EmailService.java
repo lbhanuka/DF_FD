@@ -1,6 +1,8 @@
 package com.epic.common.services;
 
 import com.epic.common.models.EmailRequestBean;
+import com.epic.common.persistance.entity.ShAlertTemplate;
+import com.epic.common.persistance.repository.ShAlertTemplateRepo;
 import com.epic.common.util.NumberWordConverter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -14,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -38,62 +39,56 @@ public class EmailService {
     @Value("${config.email.logo.path}")
     public String emailLogoPath;
 
+    @Autowired
+    private ShAlertTemplateRepo shAlertTemplateRepo;
+
     public ResponseEntity<?> sendEmail(EmailRequestBean request) throws MessagingException, IOException, URISyntaxException {
         String emailType = request.getEmailType();
 
         if(emailType.equals("FD_CREATION_SUCCESS_CUSTOMER")){
-            String subject = "e-Receipt for genie Digital Fixed Deposit by Dialog Finance";
-            String body = "Dear Customer ,<br><br>" +
-                    "Thank you for opening your Fixed Deposit with Dialog Finance.<br><br>" +
-                    "Please find your Fixed Deposit e-receipt attached below.<br><br>" +
-                    "To view your invoice, simply enter your password in the following order:<br><br>" +
-                    "Date of Birth : DDMMYYYY<br><br> " +
-                    "<b>If you have any concerns regarding your e-Receipt, please contact us via financialservice@dialog.lk or on our customer service hotline 011-4317317</b><br>";
-
+            ShAlertTemplate entity = shAlertTemplateRepo.findTopByTxnType(110);// 110 - txn type for fd creation email
+            String subject = entity.getEmailSubject();
+            String body = entity.getMessage();
             this.sendMessageWithAttachment(request.getEmailTo(),subject,body, request.getParameters());
         } else if (emailType.equals("FD_CREATION_FAILURE_IT")){
-            String subject = "FAILED : Dialog Finance Digital Fixed Deposit Creation " + request.getParameters().get("customerNic").toUpperCase();
-            String body = this.prepareEmailBody(emailType, request.getParameters());
+            ShAlertTemplate entity = shAlertTemplateRepo.findTopByTxnType(111);// 111 - txn type for fd failure email
+            String subject =  entity.getEmailSubject() + " " + request.getParameters().get("customerNic").toUpperCase();
+            String body = this.prepareEmailBody(emailType, request.getParameters(),entity.getMessage());
             this.sendSimpleMessage(request.getEmailTo(),subject,body);
         }
         ResponseEntity<?> response = new ResponseEntity<>(HttpStatus.OK);
         return response;
     }
 
-    private String prepareEmailBody(String emailType, HashMap<String, String> parameters) {
+    private String prepareEmailBody(String emailType, HashMap<String, String> parameters, String message) {
         String body = "";
         if(emailType.equals("FD_CREATION_FAILURE_IT")){
             String amount = parameters.get("depositAmount");
             double convertedNumber = Double.parseDouble(amount);
             NumberFormat formatter = NumberFormat.getInstance();
-            body = "Genie FD creation failed with following details\n\n" +
-                    "CIF : " + parameters.get("CIF") + "\n" +
-                    "NIC : " + parameters.get("customerNic") + "\n" +
-                    "Funding Savings Account : " + parameters.get("savingsAccount") + "\n" +
-                    "Applicable Product Type : " + parameters.get("productType") + "\n" +
-                    "Scheme Code : " + parameters.get("schemeCode") + "\n" +
-                    "Mobile Number : " + parameters.get("mobileNumber") + "\n" +
-                    "Customer Name : " + parameters.get("customerName") + "\n" +
-                    "Deposit Amount : " + formatter.format(convertedNumber) + " LKR\n" +
-                    "Interest Rate : " + parameters.get("interestRate") + "%\n" +
-                    "Period : " + parameters.get("depositPeriod") + " Months\n" +
-                    "Interest Payable Mode : " + parameters.get("interestPayableMode") + "\n" +
-                    "Interest Earned at Maturity/ Approx. Monthly Interest : " + parameters.get("monthlyOrMaturityInterest") + "\n";
+            parameters.put("depositAmount",formatter.format(convertedNumber));
+            body = message;
+            for (String key : parameters.keySet()) {
+                String replace = "{{" + key + "}}";
+                String replaceWith = parameters.get(key);
+                body = body.replace(replace,replaceWith);
+            }
         }
         return body;
     }
 
-    public void sendSimpleMessage( String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(emailFrom);
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
+    public void sendSimpleMessage( String[] to, String subject, String text) throws MessagingException {
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setFrom(emailFrom);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(text,true);
         emailSender.send(message);
     }
 
     public void sendMessageWithAttachment(
-            String to, String subject, String text, HashMap<String,String> parameters) throws MessagingException, IOException, URISyntaxException {
+            String[] to, String subject, String text, HashMap<String,String> parameters) throws MessagingException, IOException, URISyntaxException {
 
         MimeMessage message = emailSender.createMimeMessage();
 
@@ -134,7 +129,7 @@ public class EmailService {
         float extraNameSpace=0,extraAddressSpace=0,extraAmountSpace=0;
 
         String fullName = parameters.get("customerName");
-        if(fullName != null && fullName.length() > 42){
+        if(fullName != null && fullName.length() > 42 && fullName.indexOf(" ", 42) >= 0){
             int l1 = fullName.indexOf(" ", 42);
             nameLine1 = fullName.substring(0,l1);
             nameLine2 = fullName.substring(l1);
@@ -151,7 +146,7 @@ public class EmailService {
         }
 
         String fullAddr = parameters.get("customerAddress");
-        if(fullAddr != null && fullAddr.length() > 42){
+        if(fullAddr != null && fullAddr.length() > 42 & fullAddr.indexOf(" ", 42) >= 0){
             int l1 = fullAddr.indexOf(" ", 42);
             addressLine1 = fullAddr.substring(0,l1);
             addressLine2 = fullAddr.substring(l1);
@@ -171,7 +166,7 @@ public class EmailService {
         double convertedNumber = Double.parseDouble(amount);
         String fullAmountInLetters = NumberWordConverter.getMoneyIntoWords(convertedNumber);
 
-        if(fullAmountInLetters != null && fullAmountInLetters.length() > 48){
+        if(fullAmountInLetters != null && fullAmountInLetters.length() > 48 && fullAmountInLetters.indexOf(" ", 48) >= 0){
             int l1 = fullAmountInLetters.indexOf(" ", 48);
             amountLine1 = fullAmountInLetters.substring(0,l1);
             amountLine2 = fullAmountInLetters.substring(l1);
@@ -286,6 +281,8 @@ public class EmailService {
         contentStream.beginText();
         contentStream.newLineAtOffset(220, 420-extraNameSpace-extraAddressSpace);
         NumberFormat numberFormatter = NumberFormat.getInstance();
+        numberFormatter.setMaximumFractionDigits(2);
+        numberFormatter.setMinimumFractionDigits(2);
         contentStream.showText(": Rs." + numberFormatter.format(convertedNumber));
         contentStream.endText();
 
@@ -313,7 +310,7 @@ public class EmailService {
         contentStream.endText();
         contentStream.beginText();
         contentStream.newLineAtOffset(220, 380-extraNameSpace-extraAddressSpace-extraAmountSpace);
-        contentStream.showText(": " + parameters.get("depositPeriod") + " Months");
+        contentStream.showText(": " + parameters.get("depositPeriod") + " Month(s)");
         contentStream.endText();
         contentStream.beginText();
         contentStream.newLineAtOffset(60, 360-extraNameSpace-extraAddressSpace-extraAmountSpace);
@@ -357,6 +354,8 @@ public class EmailService {
         amount = parameters.get("maturityAmount");
         convertedNumber = Double.parseDouble(amount);
         numberFormatter = NumberFormat.getInstance();
+        numberFormatter.setMaximumFractionDigits(2);
+        numberFormatter.setMinimumFractionDigits(2);
         contentStream.showText(": Rs." + numberFormatter.format(convertedNumber));
         contentStream.endText();
 
@@ -369,16 +368,21 @@ public class EmailService {
         contentStream.beginText();
         contentStream.setFont(PDType1Font.HELVETICA_OBLIQUE, 10);
         contentStream.newLineAtOffset(60, 210-extraNameSpace-extraAddressSpace-extraAmountSpace);
-        contentStream.showText("This is a system-generated receipt and therefore does not bear a serial number or require a signature.");
+        contentStream.showText("    •   This is a system-generated receipt and therefore does not bear a serial number or require a signature.");
         contentStream.endText();
         contentStream.beginText();
         contentStream.newLineAtOffset(60, 190-extraNameSpace-extraAddressSpace-extraAmountSpace);
-        contentStream.showText("This is issued for depositor reference only and may not reflect any subsequent lien placed against the deposit (if any)." );
+        contentStream.showText("    •   This is issued for depositor reference only and may not reflect any subsequent lien placed against" );
         contentStream.endText();
         contentStream.beginText();
         contentStream.newLineAtOffset(60, 175-extraNameSpace-extraAddressSpace-extraAmountSpace);
 
-        contentStream.showText("Therefore, Dialog Finance PLC does not recommend the reliance of this receipt for external use.");
+        contentStream.showText("        the deposit (if any). Therefore, Dialog Finance PLC does not recommend the reliance of this receipt");
+        contentStream.endText();
+        contentStream.beginText();
+        contentStream.newLineAtOffset(60, 160-extraNameSpace-extraAddressSpace-extraAmountSpace);
+
+        contentStream.showText("        for external use.");
         contentStream.endText();
         contentStream.close();
 

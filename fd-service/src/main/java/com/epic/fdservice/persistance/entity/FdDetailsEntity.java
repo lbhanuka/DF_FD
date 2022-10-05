@@ -60,6 +60,15 @@ public class FdDetailsEntity {
     @Basic
     @Column(name = "MATURITYVALUE")
     private BigDecimal maturityvalue;
+    @Basic
+    @Column(name = "FAILUREREASON")
+    private String failurereason;
+    @Basic
+    @Column(name = "NAME")
+    private String name;
+    @Basic
+    @Column(name = "MOBILE")
+    private String mobile;
 
     public String getRequestid() {
         return requestid;
@@ -195,6 +204,30 @@ public class FdDetailsEntity {
 
     public void setMaturityvalue(BigDecimal maturityvalue) {
         this.maturityvalue = maturityvalue;
+    }
+
+    public String getFailurereason() {
+        return failurereason;
+    }
+
+    public void setFailurereason(String failurereason) {
+        this.failurereason = failurereason;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
     }
 
     @Override

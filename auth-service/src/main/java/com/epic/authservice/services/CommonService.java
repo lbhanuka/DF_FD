@@ -236,11 +236,13 @@ public class CommonService {
             response.put("address3",responseFromService.getBody().getRESPONSE_DATA().get("Address3").toString());
             return response;
         } catch(HttpStatusCodeException e) {
+            log.info("Email inquiry failed : http status code exception");
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
             return response;
         } catch(Exception e) {
+            log.info("Email inquiry failed : other exception");
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getMessage());

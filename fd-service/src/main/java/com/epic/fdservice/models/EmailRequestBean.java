@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class EmailRequestBean {
 
     String emailType;
-    String emailTo;
+    String[] emailTo;
     HashMap<String,String> parameters;
 
     public String getEmailType() {
@@ -16,11 +16,11 @@ public class EmailRequestBean {
         this.emailType = emailType;
     }
 
-    public String getEmailTo() {
+    public String[] getEmailTo() {
         return emailTo;
     }
 
-    public void setEmailTo(String emailTo) {
+    public void setEmailTo(String[] emailTo) {
         this.emailTo = emailTo;
     }
 

@@ -1,6 +1,8 @@
 package com.epic.brokerservice.controllers;
 
 import com.epic.brokerservice.services.FdService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,8 @@ public class FdController {
     @Autowired
     FdService fdService;
 
+    private static final Logger log = LoggerFactory.getLogger(FdController.class);
+
     @PostMapping(value = "/savings/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getSavingsList(@RequestBody HashMap<String,String> request) {
         return fdService.getSavingsAccountList(request);
@@ -28,6 +32,7 @@ public class FdController {
 
     @PostMapping(value = "/fd/calculation", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getFdInterestCalculation(@RequestBody HashMap<String,String> request) {
+        log.info("FD Interest calculation request received by Broker Service");
         return fdService.getFdInterestCalculation(request);
     }
 

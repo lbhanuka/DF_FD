@@ -5,14 +5,13 @@ import com.epic.common.services.CommonService;
 import com.epic.common.services.EmailService;
 import com.epic.common.services.SmsService;
 import com.netflix.discovery.converters.Auto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -23,6 +22,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/common")
 public class CommonController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommonController.class);
 
     @Autowired
     CommonService commonService;
@@ -36,6 +37,7 @@ public class CommonController {
     @RequestMapping(value = "/getparam", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getParamDetails(@RequestBody CommonParamRequestBean requestBean) throws Exception {
 
+        log.info("Get APP Param details request received by Common Service");
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = commonService.getParams(requestBean);
@@ -56,9 +58,10 @@ public class CommonController {
         return commonService.sendInAppPushNotification(requestBean);
     }
 
-    @RequestMapping(value = "/savings/details", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getSavingsListFromFinacle(@RequestBody SavingsDetailsFinacleRequestBean request){
-        return commonService.getSavingsAccountList(request);
+    @RequestMapping(value = "/savings/details/{type}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getSavingsListFromFinacle(@RequestBody SavingsDetailsFinacleRequestBean request, @PathVariable("type") String type){
+        log.info("Get Finacle Savings details request received by Common Service");
+        return commonService.getSavingsAccountList(request,type);
     }
 
     @RequestMapping(value = "/send/email", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)

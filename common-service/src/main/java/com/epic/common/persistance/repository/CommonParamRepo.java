@@ -23,4 +23,7 @@ public interface CommonParamRepo extends JpaRepository<ShCommonParam,String> {
     @Query("select new com.epic.common.models.MobileUserBean(e.idnumber,e.mobilenumber) from ShMobileUserEntity e where e.deviceid = ?1")
     MobileUserBean getNicByDeviceId(String deviceId);
 
+    @Query("select s.paramValue from ShCommonParam s where s.id = ?1")
+    String findParamValueById(String param_code);
+
 }

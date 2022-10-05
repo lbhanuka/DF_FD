@@ -38,7 +38,7 @@ public class AuthController {
 
     @RequestMapping(value = "/token", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAppAccessToken(@RequestBody @Valid AccessTokenRequestBean requestBean){
-        log.info("Get App access token request received by Auth Service");
+        log.info("Get App access token request received by Auth Service for client ID : " + requestBean.getClient_id());
         ResponseEntity<?> responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         Map<String, Object> map = authService.getAppAccessToken(requestBean);
@@ -90,26 +90,30 @@ public class AuthController {
 
     @RequestMapping(value = "/obtain/jwt", method = RequestMethod.POST)
     public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString,@RequestBody JwtRequestBean requestBean){
-        log.info("Obtain JWT request received by Auth Service");
+        log.info("Obtain JWT request received by Auth Service for mobile : " + requestBean.getMobileNumber() + " with DEVID : " + requestBean.getDeviceId());
         String token;
         ResponseBean responseBean = new ResponseBean();
 
         try {
 
             if (commonService.isAuthorisedAccess(authString, requestBean.getDeviceId())){
+                log.info("Obtain JWT request authorised: OK");
                 boolean success = commonService.updateMobileUser(requestBean);
                 if(success){
+                    log.info("Obtain JWT request mobile user update: OK");
                     token = commonService.getJWT(authString, requestBean.getDeviceId());
                     Token tokenBean = new Token();
                     tokenBean.setToken(token);
                     responseBean.setResponse(MessageVarList.RSP_SUCCESS);
                     responseBean.setContent(tokenBean);
                 } else {
+                    log.info("Obtain JWT request mobile user update: FAIL");
                     responseBean.setResponse(MessageVarList.RSP_FAIL);
                     responseBean.setContent(null);
                 }
 
             }else {
+                log.info("Obtain JWT request authorised: FAIL");
                 responseBean.setResponse(MessageVarList.RSP_NOT_AUTHORISED);
                 responseBean.setContent(null);
             }

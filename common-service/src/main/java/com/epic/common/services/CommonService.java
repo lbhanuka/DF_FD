@@ -3,12 +3,14 @@ package com.epic.common.services;
 import com.epic.common.models.*;
 import com.epic.common.persistance.repository.CommonParamRepo;
 import com.epic.common.util.NicValidations;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
@@ -227,8 +229,48 @@ public class CommonService {
         }
     }
 
-    public ResponseEntity<?> getSavingsAccountList(SavingsDetailsFinacleRequestBean request) {
-        return this.callToBrokerService(request);
+    public ResponseEntity<?> getSavingsAccountList(SavingsDetailsFinacleRequestBean request, String type) {
+        ResponseEntity<?>  responseFromService = null;
+        ResponseEntity<?>  responseToReturn = null;
+        ArrayList selectedAccountList = new ArrayList();
+        if(type.equals("FD")){
+            String validSavingsProducts = commonParamRepo.findParamValueById("FD_ALLOWED_SAVINGS_PRODUCTS");
+            String[] validSavingsProductList = validSavingsProducts.split("\\|");
+
+            responseFromService = this.callToBrokerService(request);
+
+            Object  response = responseFromService.getBody();
+            ObjectMapper mapper = new ObjectMapper();
+            FinacleSavingsDetailsResponseBean responseBean = mapper.convertValue(response, FinacleSavingsDetailsResponseBean.class);
+
+            if(responseBean.getRESPONSE_DATA() != null){
+                ArrayList accountList = (ArrayList) responseBean.getRESPONSE_DATA().get("AccountInfo");
+
+                for (Object sv1 : accountList){
+                    LinkedHashMap account = (LinkedHashMap) sv1;
+                    for (String product : validSavingsProductList){
+                        if(account.get("ProductCode").equals(product)){
+                            selectedAccountList.add(account);
+                        }
+                    }
+                }
+            }
+
+
+            LinkedHashMap<String,Object> responseMap = new LinkedHashMap<>();
+            responseMap.put("STATUS",responseBean.getSTATUS());
+            responseMap.put("MESSAGE",responseBean.getMESSAGE());
+
+            LinkedHashMap<String,Object> responseData = new LinkedHashMap<>();
+            responseData.put("AccountInfo",selectedAccountList);
+            responseMap.put("RESPONSE_DATA",responseData);
+
+            responseToReturn = new ResponseEntity<>(responseMap,responseFromService.getStatusCode());
+
+
+        }
+
+        return responseToReturn;
     }
 
     public ResponseEntity<?> getResponseExternal(String url, Object requestParam, String authString) {
@@ -283,7 +325,7 @@ public class CommonService {
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
 
-        ResponseEntity<?>  responseFromService = restTemplateInternal.postForEntity(url, requestEntity, String.class);
+        ResponseEntity<FinacleSavingsDetailsResponseBean>  responseFromService = restTemplateInternal.postForEntity(url, requestEntity, FinacleSavingsDetailsResponseBean.class);
         return responseFromService;
     }
 

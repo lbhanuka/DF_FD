@@ -7,6 +7,7 @@ import com.epic.fdservice.models.FdRatesResponseBean;
 import com.epic.fdservice.models.*;
 import com.epic.fdservice.persistance.entity.FdDetailsEntity;
 import com.epic.fdservice.persistance.entity.FdProductsEntity;
+import com.epic.fdservice.persistance.entity.ShAlertTemplateEntity;
 import com.epic.fdservice.persistance.entity.ShMobileUserEntity;
 import com.epic.fdservice.persistance.repository.*;
 import org.slf4j.Logger;
@@ -60,6 +61,9 @@ public class FdService {
 
     @Autowired
     Validator validator;
+
+    @Autowired
+    ShAlertTemplateRepo shAlertTemplateRepo;
 
     final String FINACLE_DOB_FORMAT = "dd-MMM-yyyy";
     final String PDF_PASSWORD_DOB_FORMAT = "ddMMyyyy";
@@ -270,6 +274,9 @@ public class FdService {
             entity.setRenewalinstruction(request.getRenewInstructions());
             entity.setTenure(Integer.parseInt(request.getDepPerdInMths()));
             entity.setTermversion(request.getTCVersion());
+            entity.setName(mobileUserEntity.getName());
+            entity.setMobile(mobileUserEntity.getMobilenumber());
+            entity.setMaturityvalue(new BigDecimal(request.getMaturityAmount()));
             entity.setStatus("FDFAIL");
 
             entity.setNic(mobileUserEntity.getIdnumber());
@@ -282,6 +289,7 @@ public class FdService {
 
             if(finacleResponse.get("STATUS").equals("SUCCESS")){
                 //send push notification
+                log.info("FD created successfully for CIF: " + request.getMainCif());
                 entity.setFdaccountnumber(finacleResponse.get("ACCOUNTNO"));
                 entity.setStatus("FDSUCCESS");
                 fdDetailsRepo.save(entity);
@@ -289,9 +297,24 @@ public class FdService {
                 pushNotificationRequestBean.setMobileNumber(mobileUserEntity.getMobilenumber());
                 pushNotificationRequestBean.setMessageType("FD_CREATE");
 
-                this.perfomePostFDFunctions(request,pushNotificationRequestBean,mobileUserEntity,finacleResponse.get("ACCOUNTNO"),entity);
+                try{
+                    this.perfomePostFDFunctions(request,pushNotificationRequestBean,mobileUserEntity,finacleResponse.get("ACCOUNTNO"),entity);
+                }catch (Exception e){
+                    log.info("Error while processing post FD operations for CIF: " + request.getMainCif());
+                    e.printStackTrace();
+                }
 
             } else {
+                if(finacleResponse.get("MESSAGE") != null){
+                    if(finacleResponse.get("MESSAGE").length() > 253){
+                        entity.setFailurereason(finacleResponse.get("MESSAGE").substring(0,253));
+                    }else {
+                        entity.setFailurereason(finacleResponse.get("MESSAGE"));
+                    }
+                }
+
+
+                fdDetailsRepo.save(entity);
                 HashMap<String,String> messageParams = new HashMap<>();
                 String retryCount = commonParamRepo.getValueByID("FD_RESEND_TIMEOUT_IN_MINUTES");
                 messageParams.put("count",retryCount);
@@ -300,13 +323,16 @@ public class FdService {
                 pushNotificationRequestBean.setMessageType("FD_CREATE_FAIL");
                 this.sendPushNotification(pushNotificationRequestBean);
                 this.sendSms(mobileUserEntity.getMobilenumber(),prepareFDFailSms(retryCount));
-                this.sendFailureEmail(request,mobileUserEntity);
+                String failureReason = "FINACLE RESPONSE ERROR : " + entity.getFailurereason();
+                this.sendFailureEmail(request,mobileUserEntity,failureReason);
             }
             response = new ResponseEntity<>(finacleResponse,HttpStatus.OK);
 
         } catch (Exception ex){
             log.info("Error while processing FD creation request for CIF: " + request.getMainCif());
-            this.sendFailureEmail(request,mobileUserEntity);
+            ex.printStackTrace();
+            String failureReason = "FD SYSTEM EXCEPTION : " + ex.getMessage();
+            this.sendFailureEmail(request,mobileUserEntity, failureReason);
             log.info("Failure email sent to DF Support Team for CIF: " + request.getMainCif());
             HashMap<String,String> responseBody = new HashMap<>();
             responseBody.put("STATUS","FAILED");
@@ -318,14 +344,25 @@ public class FdService {
     }
 
     private String prepareFDSuccessSms(String accountNumber){
-        String smsBody = "Congratulations! Your Fixed Deposit is successfully opened. Your Account No is " + accountNumber +
-                ". Take control of your account and enjoy many other benefits via the Genie App";
+        ShAlertTemplateEntity entity = shAlertTemplateRepo.findTopByTxnType(210);// 210 - txn type for fd creation SMS
+        String smsBody = entity.getMessage();
+
+        String replace = "{{accountNumber}}";
+        String replaceWith = accountNumber;
+        smsBody = smsBody.replace(replace,replaceWith);
+
         log.info("FD Creation SMS content : " + smsBody);
         return smsBody;
     }
 
     private String prepareFDFailSms( String retryCount){
-        String smsBody = "Dear Customer, your request for FD account creation failed due to a technical issue. Please try again after " + retryCount + " minutes. Thank you.";
+        ShAlertTemplateEntity entity = shAlertTemplateRepo.findTopByTxnType(211);// 211 - txn type for fd failure SMS
+        String smsBody = entity.getMessage();
+
+        String replace = "{{retryCount}}";
+        String replaceWith = retryCount;
+        smsBody = smsBody.replace(replace,replaceWith);
+
         log.info("FD Fail SMS content : " + smsBody);
         return smsBody;
     }
@@ -393,7 +430,9 @@ public class FdService {
 
         parameters.put("dateOfBirth",newDateString);
         emailRequestBean.setEmailType("FD_CREATION_SUCCESS_CUSTOMER");
-        emailRequestBean.setEmailTo(mobileUserRepo.findEmailByDeviceid(request.getDeviceId()));
+        String email = mobileUserRepo.findEmailByDeviceid(request.getDeviceId());
+        String[] emails = {email};
+        emailRequestBean.setEmailTo(emails);
         emailRequestBean.setParameters(parameters);
         log.info("Sending FD Creation Email request to common-service for email address: " + emailRequestBean.getEmailTo());
         this.callToCommonService(emailRequestBean);
@@ -411,7 +450,7 @@ public class FdService {
     }
 
     @Async
-    public void sendFailureEmail(FdCreateRequestBean request,ShMobileUserEntity mobileUserEntity) {
+    public void sendFailureEmail(FdCreateRequestBean request,ShMobileUserEntity mobileUserEntity, String failureReason) {
 
         EmailRequestBean emailRequestBean = new EmailRequestBean();
         HashMap<String,String> parameters = new HashMap<>();
@@ -433,9 +472,11 @@ public class FdService {
         parameters.put("depositPeriod",request.getDepPerdInMths());
         parameters.put("interestPayableMode",productEntity.getInterestType());
         parameters.put("monthlyOrMaturityInterest","--");
+        parameters.put("failureReason",failureReason);
 
         emailRequestBean.setEmailType("FD_CREATION_FAILURE_IT");
-        emailRequestBean.setEmailTo(commonParamRepo.getValueByID("CM_IT_EMAIL"));
+        String[] emails = {commonParamRepo.getValueByID("CM_IT_EMAIL"),commonParamRepo.getValueByID("CM_OPERATIONS_EMAIL")};
+        emailRequestBean.setEmailTo(emails);
         emailRequestBean.setParameters(parameters);
         log.info("Sending FD Failure Email request to common-service for CIF: " + request.getMainCif());
         this.callToCommonService(emailRequestBean);

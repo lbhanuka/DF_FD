@@ -16,6 +16,8 @@ public class FdCreateRequestBean {
     String deviceId;
     @JsonProperty("TCVersion")
     String TCVersion;
+    String maturityAmount;
+    String maturityDate;
 
     public String getSchmCode() {
         return schmCode;
@@ -103,5 +105,21 @@ public class FdCreateRequestBean {
 
     public void setTCVersion(String TCVersion) {
         this.TCVersion = TCVersion;
+    }
+
+    public String getMaturityAmount() {
+        return maturityAmount;
+    }
+
+    public void setMaturityAmount(String maturityAmount) {
+        this.maturityAmount = maturityAmount;
+    }
+
+    public String getMaturityDate() {
+        return maturityDate;
+    }
+
+    public void setMaturityDate(String maturityDate) {
+        this.maturityDate = maturityDate;
     }
 }
