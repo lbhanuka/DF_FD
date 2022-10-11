@@ -1,24 +1,23 @@
 package com.epic.brokerservice.services;
 
 import com.epic.brokerservice.bean.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class FdService {
+
+    private static final Logger log = LoggerFactory.getLogger(FdService.class);
 
     @Value("${config.finacle.auth_type}")
     public String authType;
@@ -56,6 +55,7 @@ public class FdService {
 
     public String getToken() {
 
+        log.info("Requesting new Finacle token");
         TokenBean bean = new TokenBean();
 
         bean.setAuth_type(authType);
@@ -80,7 +80,10 @@ public class FdService {
 
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
+            log.info("New Finacle token received");
             tokenResponseBean = responseFinacle.getBody();
+        }else {
+            log.error("Error response while receiving new Finacle token. HTTP CODE: " + responseFinacle.getStatusCode());
         }
 
         this.finacleToken = "Bearer " + tokenResponseBean.getAccess_token();
@@ -101,11 +104,15 @@ public class FdService {
         requestData.put("InqVal",inputs.get("inqValue"));
 
         requestBean.setRequest_data(requestData);
-
+        log.info("Calling Finacle savings details API");
+        log.info("Finacle savings details API request data : " +  requestData);
         ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Finacle responded with : 401 UNAUTHORIZED");
+            log.debug("Calling Finacle savings details API on : " + finacleURL + " with new token");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            log.info("Finacle savings details API response : " +  responseNew.getBody());
             return responseNew;
         }
 
@@ -126,10 +133,15 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
+        log.info("Calling Finacle FD details API");
+        log.info("Finacle FD details API request data : " +  requestData);
         ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Finacle responded with : 401 UNAUTHORIZED");
+            log.debug("Calling Finacle FD details API on : " + finacleURL + " with new token");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            log.info("Finacle FD details API response : " +  responseNew.getBody());
             return responseNew;
         }
 
@@ -148,8 +160,10 @@ public class FdService {
             ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
 
             ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+            log.info("Finacle call OK");
             return response;
         } catch(HttpStatusCodeException e) {
+            log.error("Finacle call INVALID HTTP CODE: " + e.getMessage());
             ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
             return response;
         }
@@ -169,9 +183,11 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
+        log.info("Calling Finacle FD calculation API");
         ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }
@@ -202,9 +218,11 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
+        log.info("Calling Finacle FD create API");
         ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }
@@ -226,9 +244,11 @@ public class FdService {
 
         requestBean.setRequest_data(requestData);
 
+        log.info("Calling Finacle customer details API");
         ResponseEntity<?> response = getResponse(finacleURL, requestBean, this.finacleToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
             return responseNew;
         }

@@ -2,7 +2,6 @@ package com.epic.authservice.services;
 
 import com.epic.authservice.bean.FinacleCustomerDetailsResponseBean;
 import com.epic.authservice.bean.JwtRequestBean;
-import com.epic.authservice.bean.UserAvailibilityRequestBean;
 import com.epic.authservice.persistance.entity.ShMobileUserEntity;
 import com.epic.authservice.persistance.repository.MobileUserRepo;
 import io.jsonwebtoken.*;
@@ -91,7 +90,7 @@ public class CommonService {
         return authorised;
     }
 
-    public String getJWT(String authString, String deviceId) throws Exception{
+    public String getJWT(String authString, String deviceId, String sessionId) throws Exception{
         String token;
 
         String[] credentials = this.getCredentials(authString);
@@ -106,6 +105,7 @@ public class CommonService {
                 .setExpiration(afterAddingTousandMins)
                 .claim("username", username)
                 .claim("device_id", deviceId)
+                .claim("session_id", sessionId)
                 .signWith(
                         SignatureAlgorithm.HS256,
                         synthima.getBytes("UTF-8")
@@ -221,11 +221,11 @@ public class CommonService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
-
+        log.info("Passing request to backend service on URL: " + url);
         try {
             ResponseEntity<FinacleCustomerDetailsResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FinacleCustomerDetailsResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
-            log.info("Email inquiry response status : " + responseFromService.getBody().getSTATUS());
+            log.info("Customer inquiry response status : " + responseFromService.getBody().getSTATUS());
             log.debug(responseFromService.getBody().toString());
             response.put("STATUS","SUCCESS");
             response.put("email",responseFromService.getBody().getRESPONSE_DATA().get("Email").toString());
@@ -236,13 +236,13 @@ public class CommonService {
             response.put("address3",responseFromService.getBody().getRESPONSE_DATA().get("Address3").toString());
             return response;
         } catch(HttpStatusCodeException e) {
-            log.info("Email inquiry failed : http status code exception");
+            log.info("Customer inquiry failed : http status code exception");
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
             return response;
         } catch(Exception e) {
-            log.info("Email inquiry failed : other exception");
+            log.info("Customer inquiry failed : other exception");
             log.error(e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getMessage());

@@ -55,6 +55,7 @@ public class CommonController {
 
     @RequestMapping(value = "/send/inapp", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> sendInAppPushNotification(@RequestBody PushNotificationRequestBean requestBean){
+        log.info("Send Push notification request received by Common Service");
         return commonService.sendInAppPushNotification(requestBean);
     }
 
@@ -66,11 +67,13 @@ public class CommonController {
 
     @RequestMapping(value = "/send/email", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> sendemail(@RequestBody EmailRequestBean request) throws MessagingException, IOException, URISyntaxException {
+        log.info("Send email request received by Common Service");
         return emailService.sendEmail(request);
     }
 
     @RequestMapping(value = "/send/sms", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> sendSms(@RequestBody SMSRequestBean request) {
+        log.info("Send SMS request received by Common Service");
         return smsService.sendSms(request);
     }
 

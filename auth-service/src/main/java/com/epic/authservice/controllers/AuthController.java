@@ -11,6 +11,8 @@ import io.jsonwebtoken.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -88,9 +90,12 @@ public class AuthController {
         return responseEntity;
     }
 
-    @RequestMapping(value = "/obtain/jwt", method = RequestMethod.POST)
-    public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString,@RequestBody JwtRequestBean requestBean){
-        log.info("Obtain JWT request received by Auth Service for mobile : " + requestBean.getMobileNumber() + " with DEVID : " + requestBean.getDeviceId());
+    @RequestMapping(value = "/obtain/jwt/{sessionId}", method = RequestMethod.POST)
+    public ResponseBean getJsonWebToken(@RequestHeader(value = "authorization") String authString,
+                                        @RequestBody JwtRequestBean requestBean,
+                                        @PathVariable("sessionId") String sessionId){
+        log.info("JWT request received by Auth Service for mobile : " + requestBean.getMobileNumber() + " with DEVID : " + requestBean.getDeviceId());
+        log.info("Session ID : " + sessionId + " assigned for DEVID : " + requestBean.getDeviceId());
         String token;
         ResponseBean responseBean = new ResponseBean();
 
@@ -101,7 +106,7 @@ public class AuthController {
                 boolean success = commonService.updateMobileUser(requestBean);
                 if(success){
                     log.info("Obtain JWT request mobile user update: OK");
-                    token = commonService.getJWT(authString, requestBean.getDeviceId());
+                    token = commonService.getJWT(authString, requestBean.getDeviceId(), sessionId);
                     Token tokenBean = new Token();
                     tokenBean.setToken(token);
                     responseBean.setResponse(MessageVarList.RSP_SUCCESS);

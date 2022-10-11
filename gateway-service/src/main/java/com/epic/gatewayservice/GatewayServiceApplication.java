@@ -22,7 +22,7 @@ public class GatewayServiceApplication {
         return new RestTemplate();
     }
 
-    @Bean
+    /*@Bean
     public CommonsRequestLoggingFilter requestLoggingFilter() {
         CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
         loggingFilter.setIncludeClientInfo(true);
@@ -30,6 +30,6 @@ public class GatewayServiceApplication {
         loggingFilter.setIncludePayload(true);
         loggingFilter.setMaxPayloadLength(64000);
         return loggingFilter;
-    }
+    }*/
 
 }

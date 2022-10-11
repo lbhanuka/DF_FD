@@ -165,7 +165,7 @@ public class FdService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
-
+        log.info("Calling BROKER-SERVICE on : " + url);
         try {
             ResponseEntity<FinacleFdDetailsResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FinacleFdDetailsResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
@@ -174,16 +174,19 @@ public class FdService {
             response.put("MESSAGE","FD DETAILS FETCHED");
 
             if(responseFromService.getBody().getSTATUS() != null && responseFromService.getBody().getSTATUS().equals("SUCCESS")){
+                log.info("FD details response : OK");
                 response.put("STATUS","SUCCESS");
                 response.put("DATA",responseFromService.getBody().getRESPONSE_DATA());
                 response.put("MESSAGE","FD DETAILS FETCHED");
             } else {
+                log.warn("FD details response : ERROR " + responseFromService.getBody().getMESSAGE());
                 response.put("STATUS","FAILED");
                 response.put("DATA",null);
                 response.put("MESSAGE","FINACLE MSG: " + responseFromService.getBody().getMESSAGE());
             }
             return response;
         } catch(HttpStatusCodeException e) {
+            log.error("FD details response : ERROR " + e.getMessage());
             response.put("STATUS","FAILED");
             response.put("MESSAGE",e.getResponseBodyAsString());
             return response;
@@ -201,17 +204,19 @@ public class FdService {
         }else if (language != null && language.equals("T")) {
             resultList = fdInstructionsRepo.getAllInstructionsTamil("ACT");//get all active instructions
         }else {
+            log.warn("Language in not valid : " + language);
             map.put("MESSAGE", "INVALID LANGUAGE");
             map.put("STATUS","BAD REQUEST");
             return map;
         }
 
         if(resultList != null && !resultList.isEmpty()){
-
+            log.info("FD instructions fetched from DB");
             map.put("MESSAGE","FD OPENING INSTRUCTION DETAILS FETCHED");
             map.put("STATUS","SUCCESS");
             map.put("DATA",resultList);
         } else {
+            log.warn("No active FD instructions found on DB");
             map.put("MESSAGE","NO ACTIVE FD OPENING INSTRUCTIONS FOUND");
             map.put("STATUS","FAIL");
         }
@@ -229,6 +234,7 @@ public class FdService {
         }else if (type != null && type.equals("SENIOR_CITIZEN")){
             resultList = fdRatesRepo.getFdRatesByType("SENIOR_CITIZEN");
         }else {
+            log.warn("Invalid type for FD rates: " + type);
             map.put("MESSAGE", "INVALID TYPE");
             map.put("STATUS","BAD REQUEST");
             return map;
@@ -245,10 +251,12 @@ public class FdService {
                     }
             );
 
+            log.info("FD rates fetched from DB");
             map.put("MESSAGE","FD RATES DETAILS FETCHED");
             map.put("STATUS","SUCCESS");
             map.put("DATA",resultList);
         } else {
+            log.warn("No active FD rates found on DB");
             map.put("MESSAGE","NO ACTIVE FD RATES FOUND");
             map.put("STATUS","FAIL");
         }
@@ -276,7 +284,15 @@ public class FdService {
             entity.setTermversion(request.getTCVersion());
             entity.setName(mobileUserEntity.getName());
             entity.setMobile(mobileUserEntity.getMobilenumber());
-            entity.setMaturityvalue(new BigDecimal(request.getMaturityAmount()));
+            entity.setMaturityvalue(request.getMaturityAmount() != null ? new BigDecimal(request.getMaturityAmount()) : null);
+
+            if(request.getMaturityDate() != null){
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+                Date parsedDate = dateFormat.parse(request.getMaturityDate());
+                Timestamp timestamp = new java.sql.Timestamp(parsedDate.getTime());
+                entity.setMaturitydate(timestamp);
+            }
+
             entity.setStatus("FDFAIL");
 
             entity.setNic(mobileUserEntity.getIdnumber());
@@ -379,14 +395,14 @@ public class FdService {
         request.put("message",message);
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
-
+        log.info("Calling common-service with URL : " + url);
         try {
             ResponseEntity<PushNotificationResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, PushNotificationResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
             log.info("SMS notification response status : " + responseFromService.getBody().getSTATUS());
             log.debug(responseFromService.getBody().toString());
         } catch(HttpStatusCodeException e) {
-            log.error(e.getMessage());
+            log.error("SMS notification response error : " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -434,7 +450,7 @@ public class FdService {
         String[] emails = {email};
         emailRequestBean.setEmailTo(emails);
         emailRequestBean.setParameters(parameters);
-        log.info("Sending FD Creation Email request to common-service for email address: " + emailRequestBean.getEmailTo());
+        log.info("Sending FD Creation Email request to common-service for email address: " + email);
         this.callToCommonService(emailRequestBean);
 
     }
@@ -493,7 +509,7 @@ public class FdService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
-
+        log.info("Calling common-service with URL : " + url);
         try {
             ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
             response.put("STATUS","SUCCESS");
@@ -551,14 +567,14 @@ public class FdService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBean, headers);
-
+        log.info("Calling common-service with URL : " + url);
         try {
             ResponseEntity<PushNotificationResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, PushNotificationResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
             log.info("Push notification response status : " + responseFromService.getBody().getSTATUS());
             log.debug(responseFromService.getBody().toString());
         } catch(HttpStatusCodeException e) {
-            log.error(e.getMessage());
+            log.error("Push notification response error : " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -647,10 +663,12 @@ public class FdService {
 
         if(responseBean != null && responseBean.getImage()!=null){
 
+            log.info("FD instruction image response ready");
             map.put("MESSAGE","FD INSTRUCTION IMAGES FETCHED");
             map.put("STATUS","SUCCESS");
             map.put("DATA",responseBean);
         } else {
+            log.warn("Error while processing FD instruction image : NO ACTIVE FD INSTRUCTION IMAGES FOUND");
             map.put("MESSAGE","NO ACTIVE FD INSTRUCTION IMAGES FOUND");
             map.put("STATUS","FAIL");
         }
@@ -678,11 +696,12 @@ public class FdService {
         }*/
 
         if(resultList != null && !resultList.isEmpty()){
-
+            log.info("FD allowed products response ready");
             map.put("MESSAGE","FD OPENING INSTRUCTION DETAILS FETCHED");
             map.put("STATUS","SUCCESS");
             map.put("DATA",resultList);
         } else {
+            log.warn("Error while processing FD allowed products : NO ALLOWED FD PRODUCTS FOUND");
             map.put("MESSAGE","NO ALLOWED FD PRODUCTS FOUND");
             map.put("STATUS","FAIL");
         }

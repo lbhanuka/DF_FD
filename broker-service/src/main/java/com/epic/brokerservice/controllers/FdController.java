@@ -22,11 +22,13 @@ public class FdController {
 
     @PostMapping(value = "/savings/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getSavingsList(@RequestBody HashMap<String,String> request) {
+        log.info("Get Finacle savings details request received by Broker Service");
         return fdService.getSavingsAccountList(request);
     }
 
     @PostMapping(value = "/fd/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getFdList(@RequestBody HashMap<String,String> request) {
+        log.info("Get Finacle FD details request received by Broker Service");
         return fdService.getFDAccountList(request);
     }
 
@@ -38,11 +40,13 @@ public class FdController {
 
     @PostMapping(value = "/customer/details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getFinacleCustomerDetails(@RequestBody HashMap<String,String> request) {
+        log.info("Get Finacle customer details request received by Broker Service");
         return fdService.getFinacleCustomerDetails(request);
     }
 
     @PostMapping(value = "/fd/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFdAccount(@RequestBody HashMap<String,String> request) {
+        log.info("Finacle FD Create request received by Broker Service");
         return fdService.createFdAccount(request);
     }
 }

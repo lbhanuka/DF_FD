@@ -18,6 +18,7 @@ public class FdCreateRequestBean {
     String TCVersion;
     String maturityAmount;
     String maturityDate;
+    String interestAmount;
 
     public String getSchmCode() {
         return schmCode;
@@ -121,5 +122,13 @@ public class FdCreateRequestBean {
 
     public void setMaturityDate(String maturityDate) {
         this.maturityDate = maturityDate;
+    }
+
+    public String getInterestAmount() {
+        return interestAmount;
+    }
+
+    public void setInterestAmount(String interestAmount) {
+        this.interestAmount = interestAmount;
     }
 }
