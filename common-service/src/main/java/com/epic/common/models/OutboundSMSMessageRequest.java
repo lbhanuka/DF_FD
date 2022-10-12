@@ -1,5 +1,6 @@
 package com.epic.common.models;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class OutboundSMSMessageRequest {
@@ -48,5 +49,16 @@ public class OutboundSMSMessageRequest {
 
     public void setSenderName(String senderName) {
         this.senderName = senderName;
+    }
+
+    @Override
+    public String toString() {
+        return "OutboundSMSMessageRequest{" +
+                "address=" + Arrays.toString(address) +
+                ", senderAddress='" + senderAddress + '\'' +
+                ", outboundSMSTextMessage=" + outboundSMSTextMessage +
+                ", receiptRequest=" + receiptRequest +
+                ", senderName='" + senderName + '\'' +
+                '}';
     }
 }

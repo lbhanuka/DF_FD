@@ -31,4 +31,13 @@ public class PushNotificationRequestBean {
     public void setMessageParams(HashMap<String, String> messageParams) {
         this.messageParams = messageParams;
     }
+
+    @Override
+    public String toString() {
+        return "PushNotificationRequestBean{" +
+                "mobileNumber='" + mobileNumber + '\'' +
+                ", messageType='" + messageType + '\'' +
+                ", messageParams=" + messageParams +
+                '}';
+    }
 }

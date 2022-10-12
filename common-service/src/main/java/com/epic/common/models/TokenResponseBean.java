@@ -51,4 +51,15 @@ public class TokenResponseBean {
     public void setScope(String scope) {
         this.scope = scope;
     }
+
+    @Override
+    public String toString() {
+        return "TokenResponseBean{" +
+                "access_token='" + access_token + '\'' +
+                ", token_type='" + token_type + '\'' +
+                ", refresh_token='" + refresh_token + '\'' +
+                ", expires_in=" + expires_in +
+                ", scope='" + scope + '\'' +
+                '}';
+    }
 }

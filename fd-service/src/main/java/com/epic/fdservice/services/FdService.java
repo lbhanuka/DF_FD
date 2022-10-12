@@ -331,15 +331,19 @@ public class FdService {
 
 
                 fdDetailsRepo.save(entity);
+                log.info("Failure record inserted to DB");
                 HashMap<String,String> messageParams = new HashMap<>();
                 String retryCount = commonParamRepo.getValueByID("FD_RESEND_TIMEOUT_IN_MINUTES");
                 messageParams.put("count",retryCount);
                 pushNotificationRequestBean.setMobileNumber(mobileUserEntity.getMobilenumber());
                 pushNotificationRequestBean.setMessageParams(messageParams);
                 pushNotificationRequestBean.setMessageType("FD_CREATE_FAIL");
+                log.info("Sending failure push notification");
                 this.sendPushNotification(pushNotificationRequestBean);
+                log.info("Sending failure SMS");
                 this.sendSms(mobileUserEntity.getMobilenumber(),prepareFDFailSms(retryCount));
                 String failureReason = "FINACLE RESPONSE ERROR : " + entity.getFailurereason();
+                log.info("Sending failure email");
                 this.sendFailureEmail(request,mobileUserEntity,failureReason);
             }
             response = new ResponseEntity<>(finacleResponse,HttpStatus.OK);
@@ -355,7 +359,7 @@ public class FdService {
             responseBody.put("MESSAGE","FD CREATION FAILED");
             response = new ResponseEntity<>(responseBody,HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
+        log.info("Responding back");
         return response;
     }
 
@@ -613,20 +617,25 @@ public class FdService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
-
+        log.info("Finacle FD create API request body: " + requestData);
+        log.info("Calling broker-service on URL: " + url);
         try {
             ResponseEntity<FdCreatResponseBean> responseFromService = restTemplate.postForEntity(url, requestEntity, FdCreatResponseBean.class);
             //ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
             log.debug(responseFromService.getBody().toString());
             response.put("STATUS", responseFromService.getBody().getSTATUS());
             if (responseFromService.getBody().getSTATUS().equals("SUCCESS") && responseFromService.getBody().getRESPONSE_DATA().get("STATUS").equals("SUCCESS")) {
+                log.info("Finacle FD Creating success");
                 response.put("STATUS", "SUCCESS");
                 response.put("ACCOUNTNO", responseFromService.getBody().getRESPONSE_DATA().get("TDACCOUT"));
                 response.put("MESSAGE", "FD CREATION SUCCESS");
             } else if (responseFromService.getBody().getSTATUS().equals("SUCCESS") && responseFromService.getBody().getRESPONSE_DATA().get("STATUS").equals("FAILED")){
+                log.warn("Finacle FD creation failed");
+                log.info("Finacle error response: " + responseFromService.getBody().getRESPONSE_DATA().get("ERRMSG"));
                 response.put("STATUS", "FAILED");
                 response.put("MESSAGE", "FINACLE MSG: " + responseFromService.getBody().getRESPONSE_DATA().get("ERRMSG"));
             } else {
+                log.warn("Finacle FD creation failed");
                 response.put("STATUS","FAILED");
                 response.put("MESSAGE","FD CREATION FAILED");
             }

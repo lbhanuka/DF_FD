@@ -36,4 +36,5 @@ public class CommonParamBean {
         this.value = value;
         this.description = description;
     }
+
 }

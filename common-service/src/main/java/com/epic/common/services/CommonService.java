@@ -1,9 +1,12 @@
 package com.epic.common.services;
 
+import com.epic.common.controllers.CommonController;
 import com.epic.common.models.*;
 import com.epic.common.persistance.repository.CommonParamRepo;
 import com.epic.common.util.NicValidations;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,11 +62,14 @@ public class CommonService {
 
     private String pushToken;
 
+    private static final Logger log = LoggerFactory.getLogger(CommonService.class);
+
     public Map<String, Object> getParams(CommonParamRequestBean requestBean) throws Exception {
 
         Map<String, Object> map = new HashMap<>();
         List<CommonParamBean> resultList = null;
 
+        log.info("validating common parameter request");
         Set<ConstraintViolation<CommonParamRequestBean>> violations = validator.validate(requestBean);
 
         if (!violations.isEmpty()) {
@@ -78,13 +84,18 @@ public class CommonService {
             map.put("MESSAGE", Msg);
             map.put("STATUS", "BAD REQUEST");
             return map;
+        } else {
+            log.warn("Validation failed for common parameter request");
         }
 
         if (requestBean.getCategory().equals("FD")) {
+            log.info("getting common parameters for category : FD");
             resultList = commonParamRepo.getUnderCategory(requestBean.getCategory());
         } else if (requestBean.getCategory().equals("SP")) {
+            log.info("getting common parameters for category : SP");
             resultList = commonParamRepo.getUnderCategory(requestBean.getCategory());
         } else if (requestBean.getCategory().equals("ALL")) {
+            log.info("getting common parameters for category : ALL");
             resultList = commonParamRepo.getAll();
         }
 
@@ -108,15 +119,18 @@ public class CommonService {
                         setProductType(map, resultList, nic);
 
                     } else {
+                        log.error("CANNOT VALIDATE NIC FOR DEVICE ID");
                         map.put("MESSAGE", "CANNOT VALIDATE NIC FOR DEVICE ID");
                         map.put("STATUS", "FAIL");
                     }
                 }else {
+                    log.error("DEVICE ID NOT VALID");
                     map.put("MESSAGE", "DEVICE ID NOT VALID");
                     map.put("STATUS", "FAIL");
                 }
 
             }else {
+                log.error("NO COMMON PARAM FOUND");
                 map.put("MESSAGE", "NO COMMON PARAM FOUND");
                 map.put("STATUS", "FAIL");
             }
@@ -125,10 +139,12 @@ public class CommonService {
         } else {
 
             if (resultList != null && !resultList.isEmpty()) {
+                log.info("common parameters fetched from DB");
                 map.put("MESSAGE", "COMMON PARAM FETCHED");
                 map.put("STATUS", "SUCCESS");
                 map.put("DATA", resultList);
             } else {
+                log.error("NO COMMON PARAM FOUND");
                 map.put("MESSAGE", "NO COMMON PARAM FOUND");
                 map.put("STATUS", "FAIL");
             }
@@ -166,6 +182,7 @@ public class CommonService {
                 }
             }
         }
+        log.info("common parameters fetched from DB");
         map.put("MESSAGE", "COMMON PARAM FETCHED");
         map.put("STATUS", "SUCCESS");
         map.put("DATA", resultList);
@@ -174,6 +191,7 @@ public class CommonService {
 
     public String getToken() {
 
+        log.info("Requesting new Push token");
         TokenBean bean = new TokenBean();
 
         bean.setAuth_type(authType);
@@ -190,7 +208,11 @@ public class CommonService {
 
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
+            log.info("New Push token received");
+            log.info("Push token API response : " +  responseFinacle.getBody());
             tokenResponseBean = responseFinacle.getBody();
+        }else {
+            log.error("Error response while receiving new Push token. HTTP CODE: " + responseFinacle.getStatusCode());
         }
 
         this.pushToken = "Bearer " + tokenResponseBean.getAccess_token();
@@ -200,13 +222,17 @@ public class CommonService {
 
     public ResponseEntity<?> sendInAppPushNotification(PushNotificationRequestBean requestBean){
 
+        log.info("Push API request body : " + requestBean);
+        log.info("Calling Push API on : " + pushURL);
         ResponseEntity<?> response = getResponseExternal(pushURL, requestBean, this.pushToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Push API responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponseExternal(pushURL, requestBean, this.getToken());
+            log.info("Push API response : " +  responseNew.getBody());
             return responseNew;
         }
-
+        log.info("Push API response : " +  response.getBody());
         return response;
     }
 
@@ -234,7 +260,9 @@ public class CommonService {
         ResponseEntity<?>  responseToReturn = null;
         ArrayList selectedAccountList = new ArrayList();
         if(type.equals("FD")){
+            log.info("Fetching valid savings product code list from DB");
             String validSavingsProducts = commonParamRepo.findParamValueById("FD_ALLOWED_SAVINGS_PRODUCTS");
+            log.info("Valid savings product code list from DB : " + validSavingsProducts);
             String[] validSavingsProductList = validSavingsProducts.split("\\|");
 
             responseFromService = this.callToBrokerService(request);
@@ -245,7 +273,6 @@ public class CommonService {
 
             if(responseBean.getRESPONSE_DATA() != null){
                 ArrayList accountList = (ArrayList) responseBean.getRESPONSE_DATA().get("AccountInfo");
-
                 for (Object sv1 : accountList){
                     LinkedHashMap account = (LinkedHashMap) sv1;
                     for (String product : validSavingsProductList){
@@ -254,6 +281,7 @@ public class CommonService {
                         }
                     }
                 }
+                log.info("Completed filtering account list by FD allowed product codes");
             }
 
 
@@ -270,6 +298,7 @@ public class CommonService {
 
         }
 
+        log.info("responding back to with data");
         return responseToReturn;
     }
 
@@ -285,8 +314,10 @@ public class CommonService {
             ResponseEntity<String> responseFromService = restTemplateExternal.postForEntity(url, requestEntity, String.class);
 
             ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+            log.info("Push call OK");
             return response;
         } catch(HttpStatusCodeException e) {
+            log.error("Push call INVALID HTTP CODE: " + e.getMessage());
             ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
             return response;
         }
@@ -303,6 +334,7 @@ public class CommonService {
                 requestData.put("inqType","NIC");
                 requestData.put("inqValue",mobileUserBean.getNic());
             }else {
+                log.warn("INVALID DEVICE ID");
                 response.put("MESSAGE","INVALID DEVICE ID");
                 response.put("STATUS","BAD REQUEST");
                 ResponseEntity<?> responseEntity = new ResponseEntity<>(response,HttpStatus.OK);
@@ -312,6 +344,7 @@ public class CommonService {
             requestData.put("inqType",request.getInqType());
             requestData.put("inqValue",request.getInqValue());
         } else {
+            log.warn("INVALID INQ TYPE");
             response.put("MESSAGE","INVALID INQ TYPE");
             response.put("STATUS","BAD REQUEST");
             ResponseEntity<?> responseEntity = new ResponseEntity<>(response,HttpStatus.OK);
@@ -319,13 +352,15 @@ public class CommonService {
         }
 
         String url = "http://BROKER-SERVICE/savings/details";
+        log.info("Calling broker-service on url: " + url);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         restTemplateInternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-
+        log.info("Calling broker-service on url: " + url);
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestData, headers);
 
         ResponseEntity<FinacleSavingsDetailsResponseBean>  responseFromService = restTemplateInternal.postForEntity(url, requestEntity, FinacleSavingsDetailsResponseBean.class);
+        log.info("broker-service responded with : " + responseFromService.getBody()) ;
         return responseFromService;
     }
 

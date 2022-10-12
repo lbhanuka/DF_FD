@@ -40,7 +40,7 @@ public class GatewayService {
             ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
 
             ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
-            log.info("Backend service respond OK");
+            log.info("Backend service response OK");
             return response;
         } catch(HttpStatusCodeException e) {
             log.error("Backend service communication error: INVALID HTTP STATUS: " + e.getMessage());
@@ -75,6 +75,7 @@ public class GatewayService {
                 log.info("Passing request to backend service on URL: " + url);
                 ResponseEntity<String> responseFromService = restTemplate.postForEntity(url, requestEntity, String.class);
                 ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+                log.info("Backend service response OK");
                 return response;
             } catch(HttpStatusCodeException e) {
                 log.error("Error from backend service. INVALID HTTP STATUS : " + e.getMessage());

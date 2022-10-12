@@ -11,6 +11,8 @@ import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.*;
@@ -42,25 +44,33 @@ public class EmailService {
     @Autowired
     private ShAlertTemplateRepo shAlertTemplateRepo;
 
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
     public ResponseEntity<?> sendEmail(EmailRequestBean request) throws MessagingException, IOException, URISyntaxException {
         String emailType = request.getEmailType();
 
         if(emailType.equals("FD_CREATION_SUCCESS_CUSTOMER")){
+            log.info("preparing to send FD Success Email");
             ShAlertTemplate entity = shAlertTemplateRepo.findTopByTxnType(110);// 110 - txn type for fd creation email
+            log.info("Fetched message subject and body from templates");
             String subject = entity.getEmailSubject();
             String body = entity.getMessage();
             this.sendMessageWithAttachment(request.getEmailTo(),subject,body, request.getParameters());
         } else if (emailType.equals("FD_CREATION_FAILURE_IT")){
+            log.info("preparing to send FD Failure Email");
             ShAlertTemplate entity = shAlertTemplateRepo.findTopByTxnType(111);// 111 - txn type for fd failure email
+            log.info("Fetched message subject and body from templates");
             String subject =  entity.getEmailSubject() + " " + request.getParameters().get("customerNic").toUpperCase();
             String body = this.prepareEmailBody(emailType, request.getParameters(),entity.getMessage());
             this.sendSimpleMessage(request.getEmailTo(),subject,body);
         }
         ResponseEntity<?> response = new ResponseEntity<>(HttpStatus.OK);
+        log.info("responding back");
         return response;
     }
 
     private String prepareEmailBody(String emailType, HashMap<String, String> parameters, String message) {
+        log.info("Preparing failure email body");
         String body = "";
         if(emailType.equals("FD_CREATION_FAILURE_IT")){
             String amount = parameters.get("depositAmount");
@@ -74,10 +84,12 @@ public class EmailService {
                 body = body.replace(replace,replaceWith);
             }
         }
+        log.info("Failure email body : " + body);
         return body;
     }
 
     public void sendSimpleMessage( String[] to, String subject, String text) throws MessagingException {
+        log.info("Sending email...");
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setFrom(emailFrom);
@@ -85,6 +97,7 @@ public class EmailService {
         helper.setSubject(subject);
         helper.setText(text,true);
         emailSender.send(message);
+        log.info("Email sent");
     }
 
     public void sendMessageWithAttachment(
@@ -100,12 +113,14 @@ public class EmailService {
         helper.setText(text,true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        log.info("Generating email attachment");
         this.generateEmailAttachment(outputStream, parameters);
         final InputStreamSource attachment = new ByteArrayResource(outputStream.toByteArray());
-
+        log.info("Email attachment generated");
         helper.addAttachment("e-receipt.pdf", attachment);
-
+        log.info("Sending email...");
         emailSender.send(message);
+        log.info("Email sent");
     }
 
     //private String prepareEmailBody (HashMap<String,String> body, );

@@ -59,10 +59,11 @@ public class SmsService {
 
         MifeSMSRequest mifeSMSRequest = new MifeSMSRequest(outboundSMSMessageRequest);
 
-        log.info("Calling Mife-SMS service");
+        log.info("Calling Mife-SMS service with parameters : " + outboundSMSMessageRequest);
         ResponseEntity<?> response = getResponseExternal(mifeSmsUrl, mifeSMSRequest, this.smsToken);
 
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            log.info("Mife SMS API responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponseExternal(mifeSmsUrl, mifeSMSRequest, this.getToken());
             return responseNew;
         }
@@ -77,20 +78,23 @@ public class SmsService {
         restTemplateExternal.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
-
+        log.info("Mife SMS API auth string : " + authString);
+        log.info("Calling Mife SMS API on : " + url);
         try {
             ResponseEntity<String> responseFromService = restTemplateExternal.postForEntity(url, requestEntity, String.class);
 
             ResponseEntity<?> response = new ResponseEntity<>(responseFromService.getBody(),HttpStatus.OK);
+            log.info("Mife SMS API response : " +  response.getBody());
             return response;
         } catch(HttpStatusCodeException e) {
+            log.error("Mife SMS API INVALID HTTP CODE: " + e.getMessage());
             ResponseEntity<?> response = new ResponseEntity<>(e.getResponseBodyAsString(),e.getStatusCode());
             return response;
         }
     }
 
     public String getToken() {
-
+        log.info("Requesting new Mife token");
         TokenResponseBean tokenResponseBean = new TokenResponseBean();
 
         HttpHeaders headers = new HttpHeaders();
@@ -108,7 +112,11 @@ public class SmsService {
 
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
+            log.info("New Mife token received");
+            log.info("Mife token API response : " +  responseFinacle.getBody());
             tokenResponseBean = responseFinacle.getBody();
+        }else {
+            log.error("Error response while receiving new Mife token. HTTP CODE: " + responseFinacle.getStatusCode());
         }
 
         this.smsToken = "Bearer " + tokenResponseBean.getAccess_token();

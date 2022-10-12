@@ -49,7 +49,7 @@ public class CommonController {
         }else if (map.get("STATUS").equals("SUCCESS") || map.get("STATUS").equals("FAIL")){
             responseEntity = new ResponseEntity<>(map, HttpStatus.OK);
         }
-
+        log.info("Responding to common parameter request : " + responseEntity.getBody());
         return responseEntity;
     }
 

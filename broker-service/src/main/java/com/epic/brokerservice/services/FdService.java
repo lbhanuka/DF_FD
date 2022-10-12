@@ -81,6 +81,7 @@ public class FdService {
         //HttpEntity<Object> requestEntity = new HttpEntity<>(requestParam, headers);
         if(responseFinacle.getStatusCode() == HttpStatus.OK){
             log.info("New Finacle token received");
+            log.info("Finacle token API response : " +  responseFinacle.getBody());
             tokenResponseBean = responseFinacle.getBody();
         }else {
             log.error("Error response while receiving new Finacle token. HTTP CODE: " + responseFinacle.getStatusCode());
@@ -144,7 +145,7 @@ public class FdService {
             log.info("Finacle FD details API response : " +  responseNew.getBody());
             return responseNew;
         }
-
+        log.info("Finacle FD details API response : " +  response.getBody());
         return response;
     }
 
@@ -189,9 +190,11 @@ public class FdService {
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
             log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            log.info("Finacle FD calculation API response : " +  responseNew.getBody());
             return responseNew;
         }
-
+        log.info("Finacle FD calculation API response : " +  response.getBody());
+        log.info("Responding back");
         return response;
     }
 
@@ -224,9 +227,10 @@ public class FdService {
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
             log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            log.info("Finacle FD create API response : " +  responseNew.getBody());
             return responseNew;
         }
-
+        log.info("Finacle FD create API response : " +  response.getBody());
         return response;
     }
 
@@ -250,9 +254,12 @@ public class FdService {
         if(response.getStatusCode() == HttpStatus.UNAUTHORIZED){
             log.info("Finacle responded with : 401 UNAUTHORIZED");
             ResponseEntity<?> responseNew = getResponse(finacleURL, requestBean, this.getToken());
+            log.info("Finacle customer details API response : " +  responseNew.getBody());
             return responseNew;
         }
-
+        log.info("Finacle customer details API response : " +  response
+                .getBody());
+        log.info("Responding back");
         return response;
     }
 }
