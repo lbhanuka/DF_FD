@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -275,8 +276,17 @@ public class CommonService {
                 ArrayList accountList = (ArrayList) responseBean.getRESPONSE_DATA().get("AccountInfo");
                 for (Object sv1 : accountList){
                     LinkedHashMap account = (LinkedHashMap) sv1;
+                    //select only valid savings products
                     for (String product : validSavingsProductList){
                         if(account.get("ProductCode").equals(product)){
+
+                            //calculate real savings balance
+                            BigDecimal savAmount = new BigDecimal(account.get("AcctBalance").toString());
+                            BigDecimal holdingAmount = new BigDecimal(account.get("HoleAmt").toString());
+                            BigDecimal finalAmount = savAmount.subtract(holdingAmount);
+
+                            account.put("AcctBalance",finalAmount.toString());
+
                             selectedAccountList.add(account);
                         }
                     }
