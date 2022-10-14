@@ -69,6 +69,9 @@ public class FdDetailsEntity {
     @Basic
     @Column(name = "MOBILE")
     private String mobile;
+    @Basic
+    @Column(name = "REPAYMENTMETHOD")
+    private String repaymentmethod;
 
     public String getRequestid() {
         return requestid;
@@ -228,6 +231,14 @@ public class FdDetailsEntity {
 
     public void setMobile(String mobile) {
         this.mobile = mobile;
+    }
+
+    public String getRepaymentmethod() {
+        return repaymentmethod;
+    }
+
+    public void setRepaymentmethod(String repaymentmethod) {
+        this.repaymentmethod = repaymentmethod;
     }
 
     @Override

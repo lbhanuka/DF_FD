@@ -14,4 +14,5 @@ public interface FdProductsRepo extends JpaRepository<FdProductsEntity,String> {
     List<FdProduct> getAllFdProducts(String allowedViaApp, String interestType, String productType);
 
     FdProductsEntity findByProductCode(String schemeCode);
+
 }
