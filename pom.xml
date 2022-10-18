@@ -24,7 +24,7 @@
     </modules>
 
     <properties>
-        <deploy.target.path>EPIC_DF_SERVICE_HANDLER</deploy.target.path>
+        <deploy.target.path>DEPLOYMENT</deploy.target.path>
     </properties>
 
     <build>
@@ -32,6 +32,118 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Copy jar file to output folder -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>auth-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/auth-service</outputDirectory>
+                            <resources>
+                                <resource><directory>auth-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>broker-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/broker-service</outputDirectory>
+                            <resources>
+                                <resource><directory>broker-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>common-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/common-service</outputDirectory>
+                            <resources>
+                                <resource><directory>common-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>discovery-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/discovery-service</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>discovery-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fd-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/fd-service</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>fd-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>gateway-service-to-local-directory</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${deploy.target.path}/gateway-service</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>gateway-service/target</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
